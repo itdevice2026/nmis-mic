@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NMIS Meat Inspection Certificate — Online System</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#ffffff; --ink:#0f172a; --muted:#64748b;
+    --line:#e2e8f0; --brand:#15803d; --brand-d:#166534; --accent:#1d4ed8;
+    --danger:#dc2626; --warn:#b45309; --soft:#f1f5f9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:#f8fafc;color:var(--ink);font-size:14px}
+  header.app{background:linear-gradient(90deg,var(--brand-d),var(--brand));color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header.app h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.2px}
+  header.app .sub{font-size:12px;opacity:.85}
+  header.app .who{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px}
+  .tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--line);padding:0 12px;position:sticky;top:0;z-index:20;flex-wrap:wrap}
+  .tabs button{background:none;border:none;padding:13px 16px;font-size:14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;font-weight:500}
+  .tabs button.active{color:var(--brand-d);border-bottom-color:var(--brand)}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .panel h2{margin:0 0 14px;font-size:15px;color:var(--brand-d);border-bottom:1px solid var(--line);padding-bottom:8px}
+  .grid{display:grid;gap:12px 16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:720px){.g2,.g3{grid-template-columns:1fr}}
+  label.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+  label.fld span.req{color:var(--danger)}
+  input,select,textarea{font:inherit;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid #bbf7d0;border-color:var(--brand)}
+  .radio-row{display:flex;gap:18px;align-items:center;padding-top:4px}
+  .radio-row label{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--ink);font-weight:500;cursor:pointer}
+  .btn{display:inline-flex;align-items:center;gap:7px;background:var(--brand);color:#fff;border:none;padding:9px 16px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn:hover{background:var(--brand-d)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.alt{background:var(--accent)}.btn.alt:hover{background:#1e40af}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid #cbd5e1}.btn.ghost:hover{background:var(--soft)}
+  .btn.warn{background:var(--danger)}.btn.warn:hover{background:#b91c1c}
+  .btn.sm{padding:6px 11px;font-size:12.5px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .meat-table{width:100%;border-collapse:collapse;margin-top:4px}
+  .meat-table th,.meat-table td{border:1px solid var(--line);padding:6px;text-align:left;font-size:13px}
+  .meat-table th{background:var(--soft);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .meat-table input{padding:6px 8px}
+  .meat-table td.act{width:42px;text-align:center}
+  .icon-btn{background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;line-height:1}
+  .hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+  .pill{display:inline-block;background:var(--soft);color:var(--muted);border-radius:99px;padding:2px 9px;font-size:11px;font-weight:600}
+  .rec-table{width:100%;border-collapse:collapse}
+  .rec-table th,.rec-table td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;font-size:13px;vertical-align:top}
+  .rec-table th{background:var(--soft);font-size:11px;color:var(--muted);text-transform:uppercase}
+  .rec-table tr:hover td{background:#f8fafc}
+  .rec-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .empty{text-align:center;color:var(--muted);padding:36px 10px;font-size:14px}
+  .search-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .search-row input{max-width:340px}
+  .cal-layout{display:grid;grid-template-columns:300px 1fr;gap:18px}
+  @media(max-width:900px){.cal-layout{grid-template-columns:1fr}}
+  .cal-controls .ctl{margin-bottom:14px}
+  .cal-controls .ctl label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
+  .range-val{font-weight:700;color:var(--brand-d)}
+  .preview-stage{background:#475569;border-radius:10px;padding:16px;overflow:auto}
+  #page-preview{position:relative;background:#fff;margin:0 auto;box-shadow:0 6px 24px rgba(0,0,0,.35);background-size:100% 100%;background-repeat:no-repeat}
+  .ov-field{position:absolute;font-family:"Courier New",monospace;color:#003a8c;white-space:nowrap;transform:translate(-2px,-50%);line-height:1}
+  .ov-field.center{transform:translate(-50%,-50%)}
+  #page-preview.editing .ov-field{cursor:move;background:rgba(29,78,216,.12);outline:1px dashed #1d4ed8;padding:0 2px;min-width:14px;min-height:12px}
+  #page-preview.editing .ov-field:hover{background:rgba(29,78,216,.28)}
+  .grid-overlay{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,0,0,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.10) 1px,transparent 1px);background-size:5% 5%}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 20px;border-radius:8px;font-size:13.5px;opacity:0;transition:opacity .25s;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  .toast.show{opacity:1}
+  .note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:10px 12px;border-radius:8px;font-size:12.5px;margin-bottom:14px}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px}
+  .seg{display:inline-flex;border:1px solid #cbd5e1;border-radius:7px;overflow:hidden}
+  .seg button{background:#fff;border:none;padding:7px 12px;cursor:pointer;font-size:13px;color:var(--muted)}
+  .seg button.on{background:var(--brand);color:#fff}
+  .cloud-dot{width:9px;height:9px;border-radius:50%;background:#86efac;display:inline-block}
+  .cloud-dot.off{background:#fca5a5}
+  /* auth */
+  #auth-screen{position:fixed;inset:0;background:linear-gradient(135deg,#166534,#14532d);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+  .auth-card{background:#fff;border-radius:14px;padding:30px;width:100%;max-width:380px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+  .auth-card h1{font-size:18px;margin:0 0 4px;color:var(--brand-d)}
+  .auth-card p.s{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+  .auth-card label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin:12px 0 4px}
+  .auth-err{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:9px 11px;border-radius:7px;font-size:12.5px;margin-top:12px;display:none}
+  .auth-toggle{text-align:center;margin-top:14px;font-size:12.5px;color:var(--muted)}
+  .auth-toggle a{color:var(--accent);cursor:pointer;font-weight:600}
+  #app{display:none}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  @media screen{ #print-root{display:none} }
+  @media print{
+    body{background:#fff}
+    .app,.tabs,.wrap,.toast,#auth-screen{display:none !important}
+    #print-root{display:block}
+    #print-page{position:relative;width:var(--pw);height:var(--ph);overflow:hidden}
+    .ov-field{position:absolute;font-family:"Courier New",monospace;color:#000;white-space:nowrap;transform:translate(-2px,-50%);line-height:1}
+    .ov-field.center{transform:translate(-50%,-50%)}
+    @page{margin:0}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== AUTH ===== -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div style="font-size:30px;text-align:center">🥩</div>
+    <h1 id="auth-title">Sign in</h1>
+    <p class="s">NMIS Meat Inspection Certificate System</p>
+    <label>Email</label>
+    <input id="auth-email" type="email" autocomplete="username" placeholder="you@meatplus.ph">
+    <label>Password</label>
+    <input id="auth-pass" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()">
+    <div class="auth-err" id="auth-err"></div>
+    <button class="btn" style="width:100%;justify-content:center;margin-top:16px" id="auth-btn" onclick="doAuth()">Sign in</button>
+    <div class="auth-toggle">
+      <span id="auth-switch-txt">No account yet?</span>
+      <a id="auth-switch" onclick="toggleAuthMode()">Create one</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+<header class="app">
+  <div style="font-size:26px">🥩</div>
+  <div>
+    <h1>NMIS Meat Inspection Certificate — Online System</h1>
+    <div class="sub">Form NMIS-POSM-F-021 (Ver. 1) · Cloud database · Overlay print</div>
+  </div>
+  <div class="who">
+    <span class="cloud-dot" id="cloud-dot" title="Cloud status"></span>
+    <span id="who-email"></span>
+    <button class="btn ghost sm" onclick="signOut()">Sign out</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button id="tab-entry" class="active" onclick="showTab('entry')">📝 New / Edit Certificate</button>
+  <button id="tab-records" onclick="showTab('records')">🗂️ Records</button>
+  <button id="tab-calib" onclick="showTab('calib')">🎯 Print Alignment</button>
+  <button id="tab-help" onclick="showTab('help')">❓ Help</button>
+</div>
+
+<div class="wrap">
+
+<section id="view-entry">
+  <div class="panel">
+    <h2>Certificate Details</h2>
+    <div id="editing-banner" class="note" style="display:none">✏️ Editing saved record <b id="editing-id"></b>. Saving will update it in the cloud.</div>
+    <div class="grid g3">
+      <label class="fld">NMIS No. <span class="req">*</span><input id="f-nmis_no" placeholder="e.g. 27751596" inputmode="numeric"></label>
+      <label class="fld">Suffix<input id="f-nmis_suffix" placeholder="e.g. B" style="text-transform:uppercase"></label>
+      <label class="fld">License to Operate No.<input id="f-license" placeholder="e.g. MCP-156-AA"></label>
+      <label class="fld">Province<input id="f-province" placeholder="e.g. NCR"></label>
+      <label class="fld">City / Municipality<input id="f-city" placeholder="e.g. Taguig City"></label>
+      <label class="fld">Establishment NMIS Code<input id="f-est_code" placeholder="e.g. NMIS-CSW-0522-AAA"></label>
+      <label class="fld" style="grid-column:1 / -1">Name of Establishment<input id="f-establishment" placeholder="e.g. One Stop Warehousing Solution Inc."></label>
+    </div>
+    <div style="margin-top:12px">
+      <label class="fld">Source of meat</label>
+      <div class="radio-row">
+        <label><input type="radio" name="source" value="domestic"> Domestic</label>
+        <label><input type="radio" name="source" value="imported" checked> Imported</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Meat Described</h2>
+    <table class="meat-table" id="meat-tbl">
+      <thead><tr><th style="width:50%">Type of Meat</th><th>Quantity &amp; Weight (Kg)</th><th class="act"></th></tr></thead>
+      <tbody id="meat-body"></tbody>
+    </table>
+    <div style="margin-top:10px"><button class="btn ghost sm" onclick="addMeatRow()">➕ Add row</button></div>
+    <p class="hint">Items fill the printed form column-by-column (left column top-to-bottom, then right column). Up to 14 items fit the official layout.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Distribution</h2>
+    <div class="grid g2">
+      <label class="fld">Name of Owner / Dealer<input id="f-owner" placeholder="e.g. Meatplus Trading Corp."></label>
+      <label class="fld">Destination<input id="f-destination" placeholder="e.g. Crystal Q, Navotas City"></label>
+      <label class="fld">Conveyance Used &amp; Plate No.<input id="f-conveyance" placeholder="e.g. NKG-7719"></label>
+      <label class="fld">MTV Registration No.<input id="f-mtv" placeholder="e.g. 5-0695-1246"></label>
+      <label class="fld">Date Issued<input id="f-date" type="date"></label>
+      <label class="fld">Time Issued<input id="f-time" placeholder="e.g. 3:32 PM"></label>
+      <label class="fld">Certified by (Meat Inspection Officer)<input id="f-officer" placeholder="e.g. Francisco G. Lim"></label>
+      <label class="fld">Received by (Authorized Rep.)<input id="f-received" placeholder="optional printed name"></label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="toolbar">
+      <button class="btn" id="save-btn" onclick="saveRecord()">💾 Save to Cloud</button>
+      <button class="btn alt" onclick="printCertificate()">🖨️ Print Certificate</button>
+      <button class="btn ghost" onclick="goPreview()">👁️ Preview / Align</button>
+      <button class="btn ghost" onclick="newCertificate()">🆕 Clear Form</button>
+    </div>
+    <p class="hint">Records are shared across all logged-in users. Print alignment is saved per device.</p>
+  </div>
+</section>
+
+<section id="view-records" style="display:none">
+  <div class="panel">
+    <h2>Saved Certificates (<span id="rec-count">0</span>)</h2>
+    <div class="search-row">
+      <input id="rec-search" placeholder="🔍 Search NMIS no., establishment, owner, destination…" oninput="renderRecords()">
+      <select id="rec-sort" onchange="renderRecords()">
+        <option value="date_desc">Newest first</option>
+        <option value="date_asc">Oldest first</option>
+        <option value="nmis_asc">NMIS No. ↑</option>
+        <option value="nmis_desc">NMIS No. ↓</option>
+      </select>
+      <span style="flex:1"></span>
+      <button class="btn ghost sm" onclick="refreshRecords()">🔄 Refresh</button>
+      <button class="btn ghost sm" onclick="exportData()">⬇️ Backup (JSON)</button>
+    </div>
+    <div id="rec-list"><div class="empty">Loading…</div></div>
+  </div>
+</section>
+
+<section id="view-calib" style="display:none">
+  <div class="panel">
+    <h2>Print Alignment & Preview</h2>
+    <div class="note">Overlay mode prints <b>only the typed data</b>, positioned to land on your pre-printed official forms. These settings are saved on this device.</div>
+    <div class="cal-layout">
+      <div class="cal-controls">
+        <div class="ctl"><label>Paper size</label>
+          <select id="cal-paper" onchange="applyCalibration()">
+            <option value="A4">A4 (210 × 297 mm)</option>
+            <option value="Letter">Letter (216 × 279 mm)</option>
+            <option value="Legal">Legal (216 × 356 mm)</option>
+            <option value="Folio">Folio / Long (216 × 330 mm)</option>
+          </select></div>
+        <div class="ctl"><label>Horizontal offset: <span class="range-val" id="v-offx">0</span> mm</label>
+          <input type="range" id="cal-offx" min="-20" max="20" step="0.5" value="0" oninput="applyCalibration()"></div>
+        <div class="ctl"><label>Vertical offset: <span class="range-val" id="v-offy">0</span> mm</label>
+          <input type="range" id="cal-offy" min="-20" max="20" step="0.5" value="0" oninput="applyCalibration()"></div>
+        <div class="ctl"><label>Text size: <span class="range-val" id="v-font">11</span> pt</label>
+          <input type="range" id="cal-font" min="7" max="16" step="0.5" value="11" oninput="applyCalibration()"></div>
+        <div class="ctl"><label>Font style</label>
+          <select id="cal-fontfam" onchange="applyCalibration()">
+            <option value="Mono">Monospace (Courier)</option>
+            <option value="Sans">Sans-serif (Arial)</option>
+            <option value="Serif">Serif (Times)</option>
+          </select></div>
+        <div class="ctl"><label>Reference image (optional, on-screen only)</label>
+          <input type="file" accept="image/*" onchange="loadBackground(event)">
+          <button class="btn ghost sm" style="margin-top:6px" onclick="clearBackground()">Remove image</button></div>
+        <div class="ctl"><label>Helpers</label>
+          <div class="seg"><button id="grid-off" class="on" onclick="toggleGrid(false)">Grid off</button><button id="grid-on" onclick="toggleGrid(true)">Grid on</button></div>
+          <div class="seg" style="margin-top:8px"><button id="edit-off" class="on" onclick="toggleEdit(false)">Lock fields</button><button id="edit-on" onclick="toggleEdit(true)">Drag to adjust</button></div>
+          <p class="legend">Turn on “Drag to adjust” then drag any field on the preview to fine-tune its spot. Saved automatically.</p></div>
+        <div class="ctl">
+          <button class="btn alt sm" onclick="printCertificate()">🖨️ Test print</button>
+          <button class="btn warn sm" onclick="resetPositions()">↺ Reset field map</button></div>
+      </div>
+      <div class="preview-stage">
+        <div id="page-preview"></div>
+        <p class="legend" style="color:#e2e8f0">Preview shows current form data scaled to paper size. Background image is alignment-only and never prints.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="view-help" style="display:none">
+  <div class="panel">
+    <h2>How to use</h2>
+    <ol style="line-height:1.7;font-size:13.5px">
+      <li><b>Sign in</b> with your email and password. Records are shared with everyone on the team.</li>
+      <li><b>Fill the form</b> and click <b>Save to Cloud</b>. It syncs instantly to all devices.</li>
+      <li><b>Align once per printer:</b> open “Print Alignment,” load a scan of your blank form, switch on “Drag to adjust,” drag fields onto their lines, then set the offset sliders from a test print.</li>
+      <li><b>Print:</b> set Margins = None, Scale = 100%, headers/footers off; load pre-printed forms in the tray.</li>
+      <li><b>Reprint:</b> find any certificate under “Records” and click Print.</li>
+    </ol>
+    <p class="hint">Records live in your Supabase cloud database. Print-alignment settings are stored on each device, so each workstation/printer can have its own calibration.</p>
+    <p class="hint">This system fills certificates only; it does not replace official NMIS issuance authority. Incomplete entries, erasures, or forgery invalidate the certificate.</p>
+  </div>
+</section>
+
+</div>
+</div><!-- /#app -->
+
+<div id="print-root"><div id="print-page"></div></div>
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============ CONFIG ============ */
+const SUPABASE_URL = "https://emkcwukiqxnvcbhkjiqz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_u_qnmEI8oHI9Z_A0-Hht3Q_Yvaa7Ork";
+const TABLE = "nmis_certificates";
+let sb = null;
+try{ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }catch(e){ console.error(e); }
+
+/* ============ Paper & field map ============ */
+const PAPER = {A4:[210,297], Letter:[216,279], Legal:[216,356], Folio:[216,330]};
+const FONTS = {Mono:'"Courier New",monospace', Sans:'Arial,Helvetica,sans-serif', Serif:'"Times New Roman",Times,serif'};
+const DEFAULT_MAP = {
+  nmis_no:{label:"NMIS No.",x:62.0,y:12.6,size:15,align:"left",bold:true},
+  nmis_suffix:{label:"Suffix",x:90.0,y:12.6,size:13,align:"center",bold:true},
+  province:{label:"Province",x:20.0,y:17.6,size:11,align:"left"},
+  city:{label:"City/Municipality",x:74.0,y:17.6,size:11,align:"left"},
+  establishment:{label:"Establishment",x:31.0,y:20.6,size:10.5,align:"left"},
+  est_code:{label:"Est. NMIS Code",x:2.0,y:24.5,size:9.5,align:"left"},
+  license:{label:"License No.",x:80.0,y:20.6,size:11,align:"left"},
+  src_domestic:{label:"Domestic mark",x:52.6,y:36.4,size:12,align:"center",bold:true},
+  src_imported:{label:"Imported mark",x:62.8,y:36.4,size:12,align:"center",bold:true},
+  owner:{label:"Owner/Dealer",x:41.0,y:72.4,size:11,align:"left"},
+  destination:{label:"Destination",x:80.0,y:72.4,size:11,align:"left"},
+  conveyance:{label:"Conveyance/Plate",x:42.0,y:75.0,size:11,align:"left"},
+  mtv:{label:"MTV Reg. No.",x:82.0,y:75.0,size:11,align:"left"},
+  date:{label:"Date Issued",x:23.0,y:77.6,size:11,align:"left"},
+  time:{label:"Time Issued",x:58.0,y:77.6,size:11,align:"left"},
+  officer:{label:"Officer name",x:63.0,y:85.8,size:11,align:"center",bold:true},
+  received:{label:"Received by",x:18.0,y:90.5,size:11,align:"center",bold:true}
+};
+const DEFAULT_TABLE = {colTypeL:11.0,colQtyL:26.5,colTypeR:54.0,colQtyR:70.0,startY:49.5,rowH:3.75,rowsPerCol:7,size:10.5};
+
+/* ============ State ============ */
+let MAP=loadJSON("nmis_fieldmap",null)||deepClone(DEFAULT_MAP);
+let TBL=loadJSON("nmis_table",null)||deepClone(DEFAULT_TABLE);
+let CAL=loadJSON("nmis_calibration",null)||{paper:"A4",offx:0,offy:0,font:11,fontFamily:"Mono"};
+let BG=localStorage.getItem("nmis_bg")||"";
+let RECORDS=[];
+let editingId=null, gridOn=false, editMode=false, authMode="signin";
+
+/* ============ Helpers ============ */
+function $(id){return document.getElementById(id)}
+function deepClone(o){return JSON.parse(JSON.stringify(o))}
+function loadJSON(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2400)}
+function fmtDate(iso){if(!iso)return "";const [y,m,d]=iso.split("-");if(!d)return iso;const mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return `${mo[+m-1]} ${+d}, ${y}`}
+function setCloud(ok){const d=$("cloud-dot");if(d){d.classList.toggle("off",!ok);d.title=ok?"Connected to cloud":"Cloud error"}}
+
+/* ============ AUTH ============ */
+function toggleAuthMode(){
+  authMode = authMode==="signin"?"signup":"signin";
+  $("auth-title").textContent = authMode==="signin"?"Sign in":"Create account";
+  $("auth-btn").textContent   = authMode==="signin"?"Sign in":"Create account";
+  $("auth-switch-txt").textContent = authMode==="signin"?"No account yet?":"Already have an account?";
+  $("auth-switch").textContent = authMode==="signin"?"Create one":"Sign in";
+  $("auth-err").style.display="none";
+}
+async function doAuth(){
+  const email=$("auth-email").value.trim(), pass=$("auth-pass").value;
+  const err=$("auth-err"), btn=$("auth-btn");
+  err.style.display="none";
+  if(!email||!pass){err.textContent="Enter email and password.";err.style.display="block";return}
+  btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spinner"></span>';
+  try{
+    let res;
+    if(authMode==="signin") res=await sb.auth.signInWithPassword({email,password:pass});
+    else res=await sb.auth.signUp({email,password:pass});
+    if(res.error) throw res.error;
+    if(authMode==="signup" && !res.data.session){
+      err.style.color="#166534";err.style.background="#f0fdf4";err.style.borderColor="#bbf7d0";
+      err.textContent="Account created. Check your email to confirm, then sign in.";err.style.display="block";
+      btn.disabled=false;btn.textContent=old;toggleAuthMode();return;
+    }
+    await onSignedIn(res.data.session);
+  }catch(e){
+    err.style.color="";err.style.background="";err.style.borderColor="";
+    err.textContent=(e.message||"Authentication failed.");err.style.display="block";
+  }
+  btn.disabled=false;btn.textContent=old;
+}
+async function onSignedIn(session){
+  if(!session){const r=await sb.auth.getSession();session=r.data.session}
+  if(!session)return;
+  $("auth-screen").style.display="none";
+  $("app").style.display="block";
+  $("who-email").textContent=session.user.email;
+  setCloud(true);
+  await refreshRecords();
+}
+async function signOut(){await sb.auth.signOut();location.reload()}
+
+/* ============ Meat rows ============ */
+function addMeatRow(type="",weight=""){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`<td><input class="m-type" value="${esc(type)}" placeholder="e.g. Beef Cubes"></td>
+    <td><input class="m-weight" value="${esc(weight)}" placeholder="e.g. 1,065 Kgs / 8 Nov 26"></td>
+    <td class="act"><button class="icon-btn" title="Remove" onclick="this.closest('tr').remove()">✕</button></td>`;
+  $("meat-body").appendChild(tr);
+}
+function getMeat(){return [...$("meat-body").querySelectorAll("tr")].map(tr=>({type:tr.querySelector(".m-type").value.trim(),weight:tr.querySelector(".m-weight").value.trim()})).filter(r=>r.type||r.weight)}
+function setMeat(items){$("meat-body").innerHTML="";(items&&items.length?items:[{},{},{}]).forEach(r=>addMeatRow(r.type||"",r.weight||""))}
+
+/* ============ Form <-> object ============ */
+const FIELDS=["nmis_no","nmis_suffix","license","province","city","est_code","establishment","owner","destination","conveyance","mtv","date","time","officer","received"];
+function getForm(){
+  const o={};FIELDS.forEach(f=>o[f]=$("f-"+f).value.trim());
+  o.source=(document.querySelector('input[name=source]:checked')||{}).value||"imported";
+  o.meat=getMeat();return o;
+}
+function setForm(o){
+  FIELDS.forEach(f=>$("f-"+f).value=o[f]||"");
+  document.querySelector(`input[name=source][value="${o.source||'imported'}"]`).checked=true;
+  setMeat(o.meat);
+}
+/* DB row uses date_issued/time_issued */
+function toRow(o){return {nmis_no:o.nmis_no,nmis_suffix:o.nmis_suffix||null,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,establishment:o.establishment||null,source:o.source||"imported",meat:o.meat||[],owner:o.owner||null,destination:o.destination||null,conveyance:o.conveyance||null,mtv:o.mtv||null,date_issued:o.date||null,time_issued:o.time||null,officer:o.officer||null,received:o.received||null}}
+function fromRow(r){return {id:r.id,nmis_no:r.nmis_no||"",nmis_suffix:r.nmis_suffix||"",license:r.license||"",province:r.province||"",city:r.city||"",est_code:r.est_code||"",establishment:r.establishment||"",source:r.source||"imported",meat:r.meat||[],owner:r.owner||"",destination:r.destination||"",conveyance:r.conveyance||"",mtv:r.mtv||"",date:r.date_issued||"",time:r.time_issued||"",officer:r.officer||"",received:r.received||"",created_at:r.created_at}}
+
+function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);toast("Cleared. Ready for a new certificate.");showTab("entry")}
+
+/* ============ Cloud CRUD ============ */
+async function saveRecord(){
+  const o=getForm();
+  if(!o.nmis_no){toast("⚠️ NMIS No. is required.");$("f-nmis_no").focus();return}
+  const btn=$("save-btn");btn.disabled=true;const old=btn.textContent;btn.innerHTML='<span class="spinner"></span> Saving…';
+  try{
+    if(editingId){
+      const {error}=await sb.from(TABLE).update(toRow(o)).eq("id",editingId);
+      if(error)throw error;toast("✅ Updated in cloud.");
+    }else{
+      const {data,error}=await sb.from(TABLE).insert(toRow(o)).select().single();
+      if(error)throw error;
+      editingId=data.id;$("editing-banner").style.display="block";$("editing-id").textContent=o.nmis_no;
+      toast("✅ Saved to cloud.");
+    }
+    setCloud(true);await refreshRecords(true);
+  }catch(e){setCloud(false);toast("⚠️ Save failed: "+(e.message||e))}
+  btn.disabled=false;btn.textContent=old;
+}
+async function refreshRecords(silent){
+  try{
+    const {data,error}=await sb.from(TABLE).select("*").order("created_at",{ascending:false});
+    if(error)throw error;
+    RECORDS=(data||[]).map(fromRow);setCloud(true);
+    if($("view-records").style.display!=="none")renderRecords();
+    if(!silent && $("view-records").style.display!=="none")toast("Records refreshed.");
+  }catch(e){setCloud(false);$("rec-list").innerHTML=`<div class="empty">⚠️ Could not load records: ${esc(e.message||e)}</div>`}
+}
+async function deleteRecord(id){
+  const r=RECORDS.find(x=>x.id===id);if(!r)return;
+  if(!confirm(`Delete certificate NMIS ${r.nmis_no}? This removes it for everyone and cannot be undone.`))return;
+  try{const {error}=await sb.from(TABLE).delete().eq("id",id);if(error)throw error;
+    if(editingId===id)newCertificate();await refreshRecords(true);renderRecords();toast("Record deleted.");
+  }catch(e){toast("⚠️ Delete failed: "+(e.message||e))}
+}
+function editRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;setForm(r);editingId=id;$("editing-banner").style.display="block";$("editing-id").textContent=r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):"");showTab("entry");window.scrollTo(0,0)}
+function printRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;buildPrint(r);window.print()}
+
+function renderRecords(){
+  $("rec-count").textContent=RECORDS.length;
+  const q=($("rec-search").value||"").toLowerCase().trim(), sort=$("rec-sort").value;
+  let list=RECORDS.filter(r=>!q||[r.nmis_no,r.nmis_suffix,r.establishment,r.owner,r.destination,r.city,r.province,r.license].join(" ").toLowerCase().includes(q));
+  list.sort((a,b)=>{
+    if(sort==="date_desc")return new Date(b.created_at)-new Date(a.created_at);
+    if(sort==="date_asc")return new Date(a.created_at)-new Date(b.created_at);
+    const na=parseInt(a.nmis_no)||0,nb=parseInt(b.nmis_no)||0;return sort==="nmis_asc"?na-nb:nb-na;
+  });
+  if(!list.length){$("rec-list").innerHTML=`<div class="empty">${RECORDS.length?"No records match your search.":"No certificates yet. Fill the form and click “Save to Cloud.”"}</div>`;return}
+  let h=`<table class="rec-table"><thead><tr><th>NMIS No.</th><th>Date</th><th>Establishment</th><th>Owner / Dealer</th><th>Destination</th><th style="width:200px">Actions</th></tr></thead><tbody>`;
+  list.forEach(r=>{h+=`<tr>
+    <td><b>${esc(r.nmis_no)}${r.nmis_suffix?("-"+esc(r.nmis_suffix)):""}</b></td>
+    <td>${esc(fmtDate(r.date))}<br><span class="pill">${esc((r.source||"").toUpperCase())}</span></td>
+    <td>${esc(r.establishment)}</td><td>${esc(r.owner)}</td><td>${esc(r.destination)}</td>
+    <td><div class="rec-actions">
+      <button class="btn alt sm" onclick="printRecord('${r.id}')">🖨️ Print</button>
+      <button class="btn ghost sm" onclick="editRecord('${r.id}')">✏️ Edit</button>
+      <button class="btn warn sm" onclick="deleteRecord('${r.id}')">🗑️</button>
+    </div></td></tr>`});
+  h+="</tbody></table>";$("rec-list").innerHTML=h;
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({version:2,exported:new Date().toISOString(),records:RECORDS},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="NMIS-MIC-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();toast("Backup downloaded.");
+}
+
+/* ============ Tabs ============ */
+function showTab(t){["entry","records","calib","help"].forEach(v=>{$("view-"+v).style.display=v===t?"block":"none";$("tab-"+v).classList.toggle("active",v===t)});if(t==="records")renderRecords();if(t==="calib")renderPreview()}
+function goPreview(){showTab("calib")}
+
+/* ============ Overlay build (shared) ============ */
+function fieldNodes(data){
+  const nodes=[];
+  function add(key,value){if(value==null||value==="")return;const m=MAP[key];if(!m)return;nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,key,text:value})}
+  /* nmis_no & nmis_suffix are intentionally NOT printed — pre-printed on the official form; kept in records only */
+  add("province",data.province);add("city",data.city);
+  add("establishment",data.establishment);add("est_code",data.est_code);add("license",data.license);
+  add("owner",data.owner);add("destination",data.destination);add("conveyance",data.conveyance);add("mtv",data.mtv);
+  add("date",fmtDate(data.date));add("time",data.time);add("officer",data.officer);add("received",data.received);
+  if(data.source==="domestic")add("src_domestic","X");
+  if(data.source==="imported")add("src_imported","X");
+  const items=(data.meat||[]).slice(0,TBL.rowsPerCol*2);
+  items.forEach((it,i)=>{const col=Math.floor(i/TBL.rowsPerCol),row=i%TBL.rowsPerCol,y=TBL.startY+row*TBL.rowH;
+    const xType=col===0?TBL.colTypeL:TBL.colTypeR,xQty=col===0?TBL.colQtyL:TBL.colQtyR;
+    if(it.type)nodes.push({x:xType,y,size:TBL.size,align:"left",key:"meat",text:it.type});
+    if(it.weight)nodes.push({x:xQty,y,size:TBL.size,align:"left",key:"meat",text:it.weight});});
+  return nodes;
+}
+function pxToPct(mm,dim){return (mm/dim)*100}
+
+/* ============ Preview ============ */
+function renderPreview(){loadCalUI();renderPreviewStage()}
+function loadCalUI(){$("cal-paper").value=CAL.paper;$("cal-offx").value=CAL.offx;$("cal-offy").value=CAL.offy;$("cal-font").value=CAL.font;$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;if($("cal-fontfam"))$("cal-fontfam").value=CAL.fontFamily||"Mono"}
+function renderPreviewStage(){
+  const data=getForm();const [pw,ph]=PAPER[CAL.paper];const stage=$("page-preview");
+  const W=Math.min(680,(stage.parentElement.clientWidth-32));const scale=W/pw;
+  stage.style.width=W+"px";stage.style.height=(ph*scale)+"px";
+  stage.style.backgroundImage=BG?`url(${BG})`:"none";stage.classList.toggle("editing",editMode);
+  let html=gridOn?`<div class="grid-overlay"></div>`:"";const ff=FONTS[CAL.fontFamily]||FONTS.Mono;
+  fieldNodes(data).forEach((n,idx)=>{
+    const left=(n.x+pxToPct(CAL.offx,pw))+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";
+    const fs=((n.size/11)*CAL.font)*scale*(25.4/72);
+    html+=`<div class="ov-field ${n.align==='center'?'center':''}" data-key="${n.key}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;
+  });
+  stage.innerHTML=html;if(editMode)attachDrag(pw,ph);
+}
+function attachDrag(pw,ph){
+  const stage=$("page-preview");
+  stage.querySelectorAll(".ov-field").forEach(el=>{
+    el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;
+      if(key==="meat"){toast("Table rows move together — use offsets / Reset.");return}
+      const rect=stage.getBoundingClientRect();
+      function move(ev){let x=((ev.clientX-rect.left)/rect.width)*100,y=((ev.clientY-rect.top)/rect.height)*100;
+        x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));
+        MAP[key].x=+(x-pxToPct(CAL.offx,pw)).toFixed(2);MAP[key].y=+(y-pxToPct(CAL.offy,ph)).toFixed(2);renderPreviewStage();}
+      function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_fieldmap",MAP);toast("Field position saved.")}
+      document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);};
+  });
+}
+function applyCalibration(){CAL.paper=$("cal-paper").value;CAL.fontFamily=$("cal-fontfam").value;CAL.offx=parseFloat($("cal-offx").value);CAL.offy=parseFloat($("cal-offy").value);CAL.font=parseFloat($("cal-font").value);$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;saveJSON("nmis_calibration",CAL);renderPreviewStage()}
+function toggleGrid(on){gridOn=on;$("grid-on").classList.toggle("on",on);$("grid-off").classList.toggle("on",!on);renderPreviewStage()}
+function toggleEdit(on){editMode=on;$("edit-on").classList.toggle("on",on);$("edit-off").classList.toggle("on",!on);renderPreviewStage()}
+function resetPositions(){if(!confirm("Reset all field positions to defaults?"))return;MAP=deepClone(DEFAULT_MAP);TBL=deepClone(DEFAULT_TABLE);saveJSON("nmis_fieldmap",MAP);saveJSON("nmis_table",TBL);renderPreviewStage();toast("Field map reset.")}
+function loadBackground(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{BG=rd.result;try{localStorage.setItem("nmis_bg",BG)}catch(e){toast("Image too large to save; shown this session only.")}renderPreviewStage()};rd.readAsDataURL(f)}
+function clearBackground(){BG="";localStorage.removeItem("nmis_bg");renderPreviewStage()}
+
+/* ============ Print ============ */
+function buildPrint(data){
+  const [pw,ph]=PAPER[CAL.paper];const root=$("print-page");
+  root.style.setProperty("--pw",pw+"mm");root.style.setProperty("--ph",ph+"mm");
+  document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
+  let html="";const ff=FONTS[CAL.fontFamily]||FONTS.Mono;
+  fieldNodes(data).forEach(n=>{const left=(n.x+pxToPct(CAL.offx,pw))+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";const fs=((n.size/11)*CAL.font)+"pt";
+    html+=`<div class="ov-field ${n.align==='center'?'center':''}" style="left:${left};top:${top};font-size:${fs};font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`});
+  root.innerHTML=html;
+}
+function printCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}buildPrint(o);window.print()}
+
+/* ============ Init ============ */
+(async function init(){
+  const [pw,ph]=PAPER[CAL.paper];
+  document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
+  setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);loadCalUI();
+  window.addEventListener("resize",()=>{if($("view-calib").style.display!=="none")renderPreviewStage()});
+  if(!sb){$("auth-err").textContent="Could not load cloud library. Check your internet connection.";$("auth-err").style.display="block";return}
+  const {data}=await sb.auth.getSession();
+  if(data.session) onSignedIn(data.session);
+})();
+</script>
+</body>
+</html>
