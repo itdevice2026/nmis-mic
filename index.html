@@ -224,7 +224,8 @@
 <section id="view-calib" style="display:none">
   <div class="panel">
     <h2>Print Alignment & Preview</h2>
-    <div class="note">Overlay mode prints <b>only the typed data</b>, positioned to land on your pre-printed official forms. These settings are saved on this device.</div>
+    <div class="note">Overlay mode prints <b>only the typed data</b>, positioned to land on your pre-printed official forms. Alignment is managed centrally by the administrator and used by everyone.</div>
+    <div id="align-note" class="note" style="display:none;background:#eff6ff;border-color:#bfdbfe;color:#1e40af">🔒 Print alignment is set by your administrator and applies to all users. You can still use Test print.</div>
     <div class="cal-layout">
       <div class="cal-controls">
         <div class="ctl"><label>Paper size</label>
@@ -246,16 +247,16 @@
             <option value="Sans">Sans-serif (Arial)</option>
             <option value="Serif">Serif (Times)</option>
           </select></div>
-        <div class="ctl"><label>Reference image (optional, on-screen only)</label>
+        <div class="ctl" id="cal-refimg"><label>Reference image (optional, on-screen only)</label>
           <input type="file" accept="image/*" onchange="loadBackground(event)">
           <button class="btn ghost sm" style="margin-top:6px" onclick="clearBackground()">Remove image</button></div>
-        <div class="ctl"><label>Helpers</label>
+        <div class="ctl" id="cal-helpers"><label>Helpers</label>
           <div class="seg"><button id="grid-off" class="on" onclick="toggleGrid(false)">Grid off</button><button id="grid-on" onclick="toggleGrid(true)">Grid on</button></div>
           <div class="seg" style="margin-top:8px"><button id="edit-off" class="on" onclick="toggleEdit(false)">Lock fields</button><button id="edit-on" onclick="toggleEdit(true)">Drag to adjust</button></div>
           <p class="legend">Turn on “Drag to adjust” then drag any field on the preview to fine-tune its spot. Saved automatically.</p></div>
         <div class="ctl">
           <button class="btn alt sm" onclick="printCertificate()">🖨️ Test print</button>
-          <button class="btn warn sm" onclick="resetPositions()">↺ Reset field map</button></div>
+          <button class="btn warn sm" id="cal-reset" onclick="resetPositions()">↺ Reset field map</button></div>
       </div>
       <div class="preview-stage">
         <div id="page-preview"></div>
@@ -389,8 +390,17 @@ async function onSignedIn(session){
   setCloud(true);
   try{const {data}=await sb.from("nmis_user_roles").select("role").eq("user_id",session.user.id).maybeSingle();ROLE=(data&&data.role)||"encoder";}catch(e){ROLE="encoder";}
   applyRole();
+  await loadSettings();
   await refreshRecords();
 }
+async function loadSettings(){
+  try{const {data}=await sb.from("nmis_settings").select("cal,fieldmap,tbl").eq("id","print").maybeSingle();
+    if(data){if(data.cal&&Object.keys(data.cal).length)CAL=Object.assign({},CAL,data.cal);if(data.fieldmap)MAP=data.fieldmap;if(data.tbl)TBL=data.tbl;}
+  }catch(e){}
+}
+let _setTimer=null;
+function saveSettings(){if(!isAdmin())return;clearTimeout(_setTimer);_setTimer=setTimeout(async()=>{try{const u=(await sb.auth.getUser()).data.user;const {error}=await sb.from("nmis_settings").upsert({id:"print",cal:CAL,fieldmap:MAP,tbl:TBL,updated_at:new Date().toISOString(),updated_by:u?u.id:null});if(error)throw error;}catch(e){toast("⚠️ Couldn't save alignment: "+(e.message||e));}},600);}
+function applyAlignmentLock(){var ro=!isAdmin();["cal-paper","cal-offx","cal-offy","cal-font","cal-fontfam"].forEach(id=>{var el=$(id);if(el)el.disabled=ro;});["cal-refimg","cal-helpers","cal-reset"].forEach(id=>{var el=$(id);if(el)el.style.display=ro?"none":"";});var n=$("align-note");if(n)n.style.display=ro?"block":"none";if(ro)editMode=false;}
 function isAdmin(){return ROLE==="admin"}
 function applyRole(){var b=$("role-badge");if(b){b.textContent=ROLE.toUpperCase();b.style.background=isAdmin()?"#dcfce7":"#e0e7ff";b.style.color=isAdmin()?"#166534":"#3730a3";}var tu=$("tab-users");if(tu)tu.style.display=isAdmin()?"":"none";}
 async function loadUsers(){
@@ -534,7 +544,7 @@ function fieldNodes(data){
 function pxToPct(mm,dim){return (mm/dim)*100}
 
 /* ============ Preview ============ */
-function renderPreview(){loadCalUI();renderPreviewStage()}
+function renderPreview(){loadCalUI();applyAlignmentLock();renderPreviewStage()}
 function loadCalUI(){$("cal-paper").value=CAL.paper;$("cal-offx").value=CAL.offx;$("cal-offy").value=CAL.offy;$("cal-font").value=CAL.font;$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;if($("cal-fontfam"))$("cal-fontfam").value=CAL.fontFamily||"Mono"}
 function renderPreviewStage(){
   const data=getForm();const [pw,ph]=PAPER[CAL.paper];const stage=$("page-preview");
@@ -558,14 +568,14 @@ function attachDrag(pw,ph){
       function move(ev){let x=((ev.clientX-rect.left)/rect.width)*100,y=((ev.clientY-rect.top)/rect.height)*100;
         x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));
         MAP[key].x=+(x-pxToPct(CAL.offx,pw)).toFixed(2);MAP[key].y=+(y-pxToPct(CAL.offy,ph)).toFixed(2);renderPreviewStage();}
-      function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_fieldmap",MAP);toast("Field position saved.")}
+      function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_fieldmap",MAP);saveSettings();toast("Field position saved.")}
       document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);};
   });
 }
-function applyCalibration(){CAL.paper=$("cal-paper").value;CAL.fontFamily=$("cal-fontfam").value;CAL.offx=parseFloat($("cal-offx").value);CAL.offy=parseFloat($("cal-offy").value);CAL.font=parseFloat($("cal-font").value);$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;saveJSON("nmis_calibration",CAL);renderPreviewStage()}
+function applyCalibration(){CAL.paper=$("cal-paper").value;CAL.fontFamily=$("cal-fontfam").value;CAL.offx=parseFloat($("cal-offx").value);CAL.offy=parseFloat($("cal-offy").value);CAL.font=parseFloat($("cal-font").value);$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;saveJSON("nmis_calibration",CAL);saveSettings();renderPreviewStage()}
 function toggleGrid(on){gridOn=on;$("grid-on").classList.toggle("on",on);$("grid-off").classList.toggle("on",!on);renderPreviewStage()}
 function toggleEdit(on){editMode=on;$("edit-on").classList.toggle("on",on);$("edit-off").classList.toggle("on",!on);renderPreviewStage()}
-function resetPositions(){if(!confirm("Reset all field positions to defaults?"))return;MAP=deepClone(DEFAULT_MAP);TBL=deepClone(DEFAULT_TABLE);saveJSON("nmis_fieldmap",MAP);saveJSON("nmis_table",TBL);renderPreviewStage();toast("Field map reset.")}
+function resetPositions(){if(!confirm("Reset all field positions to defaults?"))return;MAP=deepClone(DEFAULT_MAP);TBL=deepClone(DEFAULT_TABLE);saveJSON("nmis_fieldmap",MAP);saveJSON("nmis_table",TBL);saveSettings();renderPreviewStage();toast("Field map reset.")}
 function loadBackground(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{BG=rd.result;try{localStorage.setItem("nmis_bg",BG)}catch(e){toast("Image too large to save; shown this session only.")}renderPreviewStage()};rd.readAsDataURL(f)}
 function clearBackground(){BG="";localStorage.removeItem("nmis_bg");renderPreviewStage()}
 
