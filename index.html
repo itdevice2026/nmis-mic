@@ -134,6 +134,7 @@
   <div class="who">
     <span class="cloud-dot" id="cloud-dot" title="Cloud status"></span>
     <span id="who-email"></span>
+    <span id="role-badge" class="pill"></span>
     <button class="btn ghost sm" onclick="signOut()">Sign out</button>
   </div>
 </header>
@@ -142,6 +143,7 @@
   <button id="tab-entry" class="active" onclick="showTab('entry')">📝 New / Edit Certificate</button>
   <button id="tab-records" onclick="showTab('records')">🗂️ Records</button>
   <button id="tab-calib" onclick="showTab('calib')">🎯 Print Alignment</button>
+  <button id="tab-users" onclick="showTab('users')" style="display:none">👥 Users &amp; Roles</button>
   <button id="tab-help" onclick="showTab('help')">❓ Help</button>
 </div>
 
@@ -267,6 +269,17 @@
   </div>
 </section>
 
+<section id="view-users" style="display:none">
+  <div class="panel">
+    <h2>Users &amp; Roles</h2>
+    <div class="note">Admin-only. Set each user as <b>Admin</b> (create, edit, delete, manage users) or <b>Encoder</b> (create, view, search, print only). New sign-ups default to Encoder. To add a new person, create their account in Supabase (Authentication → Users), then set their role here.</div>
+    <div class="search-row">
+      <button class="btn ghost sm" onclick="loadUsers()">🔄 Refresh</button>
+    </div>
+    <div id="users-list"><div class="empty">Loading…</div></div>
+  </div>
+</section>
+
 <section id="view-help" style="display:none">
   <div class="panel">
     <h2>How to use</h2>
@@ -327,7 +340,7 @@ let TBL=loadJSON("nmis_table",null)||deepClone(DEFAULT_TABLE);
 let CAL=loadJSON("nmis_calibration",null)||{paper:"A4",offx:0,offy:0,font:11,fontFamily:"Mono"};
 let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
-let editingId=null, gridOn=false, editMode=false, authMode="signin";
+let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder";
 
 /* ============ Helpers ============ */
 function $(id){return document.getElementById(id)}
@@ -378,7 +391,31 @@ async function onSignedIn(session){
   $("app").style.display="block";
   $("who-email").textContent=session.user.email;
   setCloud(true);
+  try{const {data}=await sb.from("nmis_user_roles").select("role").eq("user_id",session.user.id).maybeSingle();ROLE=(data&&data.role)||"encoder";}catch(e){ROLE="encoder";}
+  applyRole();
   await refreshRecords();
+}
+function isAdmin(){return ROLE==="admin"}
+function applyRole(){var b=$("role-badge");if(b){b.textContent=ROLE.toUpperCase();b.style.background=isAdmin()?"#dcfce7":"#e0e7ff";b.style.color=isAdmin()?"#166534":"#3730a3";}var tu=$("tab-users");if(tu)tu.style.display=isAdmin()?"":"none";}
+async function loadUsers(){
+  if(!isAdmin()){$("users-list").innerHTML='<div class="empty">Admins only.</div>';return}
+  $("users-list").innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const {data,error}=await sb.rpc("nmis_admin_list_users");
+    if(error)throw error;
+    if(!data||!data.length){$("users-list").innerHTML='<div class="empty">No users yet.</div>';return}
+    let h='<table class="rec-table"><thead><tr><th>Email</th><th>Current role</th><th style="width:200px">Set role</th></tr></thead><tbody>';
+    data.forEach(u=>{h+=`<tr><td>${esc(u.email)}</td><td><span class="pill">${esc((u.role||'encoder').toUpperCase())}</span></td>
+      <td><select onchange="setUserRole('${u.user_id}',this.value)">
+        <option value="encoder"${u.role!=='admin'?' selected':''}>Encoder</option>
+        <option value="admin"${u.role==='admin'?' selected':''}>Admin</option>
+      </select></td></tr>`});
+    h+='</tbody></table>';$("users-list").innerHTML=h;
+  }catch(e){$("users-list").innerHTML='<div class="empty">⚠️ '+esc(e.message||e)+'</div>'}
+}
+async function setUserRole(uid,role){
+  try{const {error}=await sb.rpc("nmis_admin_set_role",{target:uid,new_role:role});if(error)throw error;toast("Role updated.");loadUsers();}
+  catch(e){toast("⚠️ "+(e.message||e));loadUsers();}
 }
 async function signOut(){await sb.auth.signOut();location.reload()}
 
@@ -415,6 +452,7 @@ function newCertificate(){editingId=null;$("editing-banner").style.display="none
 async function saveRecord(){
   const o=getForm();
   if(!o.nmis_no){toast("⚠️ NMIS No. is required.");$("f-nmis_no").focus();return}
+  if(editingId && !isAdmin()){toast("Encoders can't edit saved records — use Clear Form to start a new one.");return}
   const btn=$("save-btn");btn.disabled=true;const old=btn.textContent;btn.innerHTML='<span class="spinner"></span> Saving…';
   try{
     if(editingId){
@@ -466,8 +504,7 @@ function renderRecords(){
     <td>${esc(r.establishment)}</td><td>${esc(r.owner)}</td><td>${esc(r.destination)}</td>
     <td><div class="rec-actions">
       <button class="btn alt sm" onclick="printRecord('${r.id}')">🖨️ Print</button>
-      <button class="btn ghost sm" onclick="editRecord('${r.id}')">✏️ Edit</button>
-      <button class="btn warn sm" onclick="deleteRecord('${r.id}')">🗑️</button>
+      ${isAdmin()?`<button class="btn ghost sm" onclick="editRecord('${r.id}')">✏️ Edit</button><button class="btn warn sm" onclick="deleteRecord('${r.id}')">🗑️</button>`:""}
     </div></td></tr>`});
   h+="</tbody></table>";$("rec-list").innerHTML=h;
 }
@@ -477,7 +514,7 @@ function exportData(){
 }
 
 /* ============ Tabs ============ */
-function showTab(t){["entry","records","calib","help"].forEach(v=>{$("view-"+v).style.display=v===t?"block":"none";$("tab-"+v).classList.toggle("active",v===t)});if(t==="records")renderRecords();if(t==="calib")renderPreview()}
+function showTab(t){["entry","records","calib","users","help"].forEach(v=>{$("view-"+v).style.display=v===t?"block":"none";$("tab-"+v).classList.toggle("active",v===t)});if(t==="records")renderRecords();if(t==="calib")renderPreview();if(t==="users")loadUsers()}
 function goPreview(){showTab("calib")}
 
 /* ============ Overlay build (shared) ============ */
