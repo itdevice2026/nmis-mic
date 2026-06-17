@@ -273,8 +273,13 @@
 <section id="view-users" style="display:none">
   <div class="panel">
     <h2>Users &amp; Roles</h2>
-    <div class="note">Admin-only. Set each user as <b>Admin</b> (create, edit, delete, manage users) or <b>Encoder</b> (create, view, search, print only). New sign-ups default to Encoder. To add a new person, create their account in Supabase (Authentication → Users), then set their role here.</div>
+    <div class="note">Admin-only. Set each user as <b>Admin</b> (create, edit, delete, manage users) or <b>Encoder</b> (create, view, search, print only). Add a person below — they can sign in immediately with the email and temporary password you set.</div>
     <div class="search-row">
+      <input id="nu-email" type="email" placeholder="new.user@meatplus.ph" style="max-width:230px">
+      <input id="nu-pass" type="text" placeholder="temporary password" style="max-width:190px">
+      <select id="nu-role" style="max-width:130px"><option value="encoder">Encoder</option><option value="admin">Admin</option></select>
+      <button class="btn sm" onclick="addUser()">➕ Add user</button>
+      <span style="flex:1"></span>
       <button class="btn ghost sm" onclick="loadUsers()">🔄 Refresh</button>
     </div>
     <div id="users-list"><div class="empty">Loading…</div></div>
@@ -443,6 +448,15 @@ async function deleteUser(uid,email){
   if(!confirm("Delete the account "+email+"? This permanently removes their login and cannot be undone."))return;
   try{const {error}=await sb.rpc("nmis_admin_delete_user",{target:uid});if(error)throw error;toast("User deleted.");loadUsers();}
   catch(e){toast("⚠️ "+(e.message||e))}
+}
+async function addUser(){
+  var email=$("nu-email").value.trim(),pass=$("nu-pass").value,role=$("nu-role").value;
+  if(!email||!pass){toast("Enter email and a temporary password.");return}
+  try{const {data,error}=await sb.rpc("nmis_admin_create_user",{p_email:email,p_password:pass});if(error)throw error;
+    if(role==="admin"&&data){await sb.rpc("nmis_admin_set_role",{target:data,new_role:"admin"});}
+    $("nu-email").value="";$("nu-pass").value="";$("nu-role").value="encoder";
+    toast("✅ User created: "+email);loadUsers();
+  }catch(e){toast("⚠️ "+(e.message||e))}
 }
 async function signOut(){await sb.auth.signOut();location.reload()}
 
