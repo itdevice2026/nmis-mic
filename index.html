@@ -537,8 +537,8 @@ function fieldNodes(data){
   const items=(data.meat||[]).slice(0,TBL.rowsPerCol*2);
   items.forEach((it,i)=>{const col=Math.floor(i/TBL.rowsPerCol),row=i%TBL.rowsPerCol,y=TBL.startY+row*TBL.rowH;
     const xType=col===0?TBL.colTypeL:TBL.colTypeR,xQty=col===0?TBL.colQtyL:TBL.colQtyR;
-    if(it.type)nodes.push({x:xType,y,size:TBL.size,align:"left",key:"meat",text:it.type});
-    if(it.weight)nodes.push({x:xQty,y,size:TBL.size,align:"left",key:"meat",text:it.weight});});
+    if(it.type)nodes.push({x:xType,y,size:TBL.size,align:"left",key:"meat",mkey:(col===0?"colTypeL":"colTypeR"),mrow:row,text:it.type});
+    if(it.weight)nodes.push({x:xQty,y,size:TBL.size,align:"left",key:"meat",mkey:(col===0?"colQtyL":"colQtyR"),mrow:row,text:it.weight});});
   return nodes;
 }
 function pxToPct(mm,dim){return (mm/dim)*100}
@@ -555,20 +555,22 @@ function renderPreviewStage(){
   fieldNodes(data).forEach((n,idx)=>{
     const left=(n.x+pxToPct(CAL.offx,pw))+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";
     const fs=((n.size/11)*CAL.font)*scale*(25.4/72);
-    html+=`<div class="ov-field ${n.align==='center'?'center':''}" data-key="${n.key}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;
+    html+=`<div class="ov-field ${n.align==='center'?'center':''}" data-key="${n.key}" data-mkey="${n.mkey||''}" data-mrow="${n.mrow==null?'':n.mrow}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;
   });
   stage.innerHTML=html;if(editMode)attachDrag(pw,ph);
 }
 function attachDrag(pw,ph){
   const stage=$("page-preview");
   stage.querySelectorAll(".ov-field").forEach(el=>{
-    el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;
-      if(key==="meat"){toast("Table rows move together — use offsets / Reset.");return}
+    el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;const mkey=el.dataset.mkey;const mrow=parseInt(el.dataset.mrow);
       const rect=stage.getBoundingClientRect();
       function move(ev){let x=((ev.clientX-rect.left)/rect.width)*100,y=((ev.clientY-rect.top)/rect.height)*100;
         x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));
-        MAP[key].x=+(x-pxToPct(CAL.offx,pw)).toFixed(2);MAP[key].y=+(y-pxToPct(CAL.offy,ph)).toFixed(2);renderPreviewStage();}
-      function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_fieldmap",MAP);saveSettings();toast("Field position saved.")}
+        var ax=+(x-pxToPct(CAL.offx,pw)).toFixed(2),ay=+(y-pxToPct(CAL.offy,ph)).toFixed(2);
+        if(key==="meat"){if(mkey)TBL[mkey]=ax;TBL.startY=+(ay-(isNaN(mrow)?0:mrow)*TBL.rowH).toFixed(2);}
+        else{MAP[key].x=ax;MAP[key].y=ay;}
+        renderPreviewStage();}
+      function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_fieldmap",MAP);saveJSON("nmis_table",TBL);saveSettings();toast("Position saved.")}
       document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);};
   });
 }
