@@ -134,6 +134,7 @@
     <span class="cloud-dot" id="cloud-dot" title="Cloud status"></span>
     <span id="who-email"></span>
     <span id="role-badge" class="pill"></span>
+    <button class="btn ghost sm" onclick="openPwd()">🔑 Password</button>
     <button class="btn ghost sm" onclick="signOut()">Sign out</button>
   </div>
 </header>
@@ -318,6 +319,20 @@
 </div>
 </div><!-- /#app -->
 
+<div id="pwd-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:20px">
+  <div class="auth-card" style="max-width:340px">
+    <h1 style="font-size:16px;margin:0 0 12px;color:var(--brand-d)">Change your password</h1>
+    <label style="font-size:12px;font-weight:600;color:var(--muted)">New password</label>
+    <input id="pwd-new" type="password" placeholder="at least 6 characters">
+    <label style="font-size:12px;font-weight:600;color:var(--muted);margin-top:10px;display:block">Confirm new password</label>
+    <input id="pwd-confirm" type="password" placeholder="re-type new password">
+    <div id="pwd-err" class="auth-err"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" style="flex:1;justify-content:center" onclick="changePwd()">Save</button>
+      <button class="btn ghost" onclick="closePwd()">Cancel</button>
+    </div>
+  </div>
+</div>
 <div id="print-root"><div id="print-page"></div></div>
 <div id="toast" class="toast"></div>
 
@@ -440,7 +455,7 @@ function applyAlignmentLock(){var ro=!isAdmin();["cal-paper","cal-offx","cal-off
 function isAdmin(){return ROLE==="admin"}
 function applyRole(){var b=$("role-badge");if(b){b.textContent=ROLE.toUpperCase();b.style.background=isAdmin()?"#dcfce7":"#e0e7ff";b.style.color=isAdmin()?"#166534":"#3730a3";}var tu=$("tab-users");if(tu)tu.style.display=isAdmin()?"":"none";var td=$("tab-dash");if(td)td.style.display=isAdmin()?"":"none";}
 function dashCard(label,val){return `<div class="panel" style="margin:0;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--brand-d)">${val}</div><div class="hint">${esc(label)}</div></div>`;}
-function prettyAction(a){return ({login:"Login",create_certificate:"Created cert",update_certificate:"Updated cert",delete_certificate:"Deleted cert",print:"Printed",add_user:"Added user",delete_user:"Deleted user",set_role:"Set role"}[a]||a);}
+function prettyAction(a){return ({login:"Login",create_certificate:"Created cert",update_certificate:"Updated cert",delete_certificate:"Deleted cert",print:"Printed",add_user:"Added user",delete_user:"Deleted user",set_role:"Set role",change_password:"Changed password"}[a]||a);}
 function fmtDateTime(iso){if(!iso)return"";try{return new Date(iso).toLocaleString()}catch(e){return iso}}
 async function loadDashboard(){
   if(!isAdmin()){$("dash-activity").innerHTML='<div class="empty">Admins only.</div>';return}
@@ -498,6 +513,15 @@ async function addUser(){
   }catch(e){toast("⚠️ "+(e.message||e))}
 }
 async function signOut(){await sb.auth.signOut();location.reload()}
+function openPwd(){$("pwd-new").value="";$("pwd-confirm").value="";$("pwd-err").style.display="none";$("pwd-modal").style.display="flex";}
+function closePwd(){$("pwd-modal").style.display="none";}
+async function changePwd(){
+  var p=$("pwd-new").value,c=$("pwd-confirm").value,err=$("pwd-err");err.style.display="none";
+  if(p.length<6){err.textContent="Password must be at least 6 characters.";err.style.display="block";return}
+  if(p!==c){err.textContent="Passwords do not match.";err.style.display="block";return}
+  try{const {error}=await sb.auth.updateUser({password:p});if(error)throw error;logActivity("change_password","");toast("✅ Password changed.");closePwd();}
+  catch(e){err.textContent=(e.message||e);err.style.display="block";}
+}
 
 /* ============ Meat rows ============ */
 function meatRowHtml(L,R){return `<tr><td><input class="m-ltype" value="${esc((L&&L.type)||'')}" placeholder="Type of meat"></td><td><input class="m-lqty" value="${esc((L&&L.weight)||'')}" placeholder="Qty & weight"></td><td><input class="m-rtype" value="${esc((R&&R.type)||'')}" placeholder="Type of meat"></td><td><input class="m-rqty" value="${esc((R&&R.weight)||'')}" placeholder="Qty & weight"></td><td class="act"><button class="icon-btn" title="Delete row" onclick="delMeatRow(this)">✕</button></td></tr>`;}
