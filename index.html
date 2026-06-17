@@ -424,18 +424,25 @@ async function loadUsers(){
     const {data,error}=await sb.rpc("nmis_admin_list_users");
     if(error)throw error;
     if(!data||!data.length){$("users-list").innerHTML='<div class="empty">No users yet.</div>';return}
-    let h='<table class="rec-table"><thead><tr><th>Email</th><th>Current role</th><th style="width:200px">Set role</th></tr></thead><tbody>';
-    data.forEach(u=>{h+=`<tr><td>${esc(u.email)}</td><td><span class="pill">${esc((u.role||'encoder').toUpperCase())}</span></td>
+    var me=USER_EMAIL.toLowerCase();
+    let h='<table class="rec-table"><thead><tr><th>Email</th><th>Current role</th><th style="width:160px">Set role</th><th style="width:90px"></th></tr></thead><tbody>';
+    data.forEach(u=>{var self=(u.email||'').toLowerCase()===me;h+=`<tr><td>${esc(u.email)}</td><td><span class="pill">${esc((u.role||'encoder').toUpperCase())}</span></td>
       <td><select onchange="setUserRole('${u.user_id}',this.value)">
         <option value="encoder"${u.role!=='admin'?' selected':''}>Encoder</option>
         <option value="admin"${u.role==='admin'?' selected':''}>Admin</option>
-      </select></td></tr>`});
+      </select></td>
+      <td>${self?'<span class="pill">you</span>':`<button class="btn warn sm" onclick="deleteUser('${u.user_id}','${esc(u.email)}')">🗑️ Delete</button>`}</td></tr>`});
     h+='</tbody></table>';$("users-list").innerHTML=h;
   }catch(e){$("users-list").innerHTML='<div class="empty">⚠️ '+esc(e.message||e)+'</div>'}
 }
 async function setUserRole(uid,role){
   try{const {error}=await sb.rpc("nmis_admin_set_role",{target:uid,new_role:role});if(error)throw error;toast("Role updated.");loadUsers();}
   catch(e){toast("⚠️ "+(e.message||e));loadUsers();}
+}
+async function deleteUser(uid,email){
+  if(!confirm("Delete the account "+email+"? This permanently removes their login and cannot be undone."))return;
+  try{const {error}=await sb.rpc("nmis_admin_delete_user",{target:uid});if(error)throw error;toast("User deleted.");loadUsers();}
+  catch(e){toast("⚠️ "+(e.message||e))}
 }
 async function signOut(){await sb.auth.signOut();location.reload()}
 
