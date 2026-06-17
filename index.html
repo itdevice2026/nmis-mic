@@ -275,9 +275,10 @@
     <h2>Users &amp; Roles</h2>
     <div class="note">Admin-only. Set each user as <b>Admin</b> (create, edit, delete, manage users) or <b>Encoder</b> (create, view, search, print only). Add a person below — they can sign in immediately with the email and temporary password you set.</div>
     <div class="search-row">
-      <input id="nu-email" type="email" placeholder="new.user@meatplus.ph" style="max-width:230px">
-      <input id="nu-pass" type="text" placeholder="temporary password" style="max-width:190px">
-      <select id="nu-role" style="max-width:130px"><option value="encoder">Encoder</option><option value="admin">Admin</option></select>
+      <input id="nu-name" type="text" placeholder="Complete name" style="max-width:190px">
+      <input id="nu-email" type="email" placeholder="new.user@meatplus.ph" style="max-width:210px">
+      <input id="nu-pass" type="text" placeholder="temporary password" style="max-width:170px">
+      <select id="nu-role" style="max-width:120px"><option value="encoder">Encoder</option><option value="admin">Admin</option></select>
       <button class="btn sm" onclick="addUser()">➕ Add user</button>
       <span style="flex:1"></span>
       <button class="btn ghost sm" onclick="loadUsers()">🔄 Refresh</button>
@@ -346,8 +347,9 @@ let TBL=loadJSON("nmis_table",null)||deepClone(DEFAULT_TABLE);
 let CAL=loadJSON("nmis_calibration",null)||{paper:"A4",offx:0,offy:0,font:11,fontFamily:"Mono"};
 let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
-let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="";
+let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="";
 function nameFromEmail(e){if(!e)return"";var l=e.split("@")[0].replace(/[._]+/g," ").trim();return l.replace(/\b\w/g,c=>c.toUpperCase());}
+function encoderName(){return USER_NAME||nameFromEmail(USER_EMAIL);}
 let ESTABS=[];
 async function loadEstablishments(){try{const {data}=await sb.from("nmis_establishments").select("*").order("name");ESTABS=data||[];renderEstabLists();}catch(e){}}
 function renderEstabLists(){var el=$("estab-list"),ll=$("lic-list");if(el)el.innerHTML=ESTABS.map(e=>`<option value="${esc(e.name||"")}"></option>`).join("");if(ll)ll.innerHTML=ESTABS.filter(e=>e.license).map(e=>`<option value="${esc(e.license)}"></option>`).join("");}
@@ -404,9 +406,9 @@ async function onSignedIn(session){
   $("app").style.display="block";
   $("who-email").textContent=session.user.email;
   USER_EMAIL=session.user.email;
-  if(!$("f-received").value)$("f-received").value=nameFromEmail(USER_EMAIL);
   setCloud(true);
-  try{const {data}=await sb.from("nmis_user_roles").select("role").eq("user_id",session.user.id).maybeSingle();ROLE=(data&&data.role)||"encoder";}catch(e){ROLE="encoder";}
+  try{const {data}=await sb.from("nmis_user_roles").select("role,full_name").eq("user_id",session.user.id).maybeSingle();ROLE=(data&&data.role)||"encoder";USER_NAME=(data&&data.full_name)||"";}catch(e){ROLE="encoder";}
+  if(!$("f-received").value)$("f-received").value=encoderName();
   applyRole();
   await loadSettings();
   await loadEstablishments();
@@ -430,8 +432,8 @@ async function loadUsers(){
     if(error)throw error;
     if(!data||!data.length){$("users-list").innerHTML='<div class="empty">No users yet.</div>';return}
     var me=USER_EMAIL.toLowerCase();
-    let h='<table class="rec-table"><thead><tr><th>Email</th><th>Current role</th><th style="width:160px">Set role</th><th style="width:90px"></th></tr></thead><tbody>';
-    data.forEach(u=>{var self=(u.email||'').toLowerCase()===me;h+=`<tr><td>${esc(u.email)}</td><td><span class="pill">${esc((u.role||'encoder').toUpperCase())}</span></td>
+    let h='<table class="rec-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th style="width:150px">Set role</th><th style="width:90px"></th></tr></thead><tbody>';
+    data.forEach(u=>{var self=(u.email||'').toLowerCase()===me;h+=`<tr><td>${esc(u.full_name||'')}</td><td>${esc(u.email)}</td><td><span class="pill">${esc((u.role||'encoder').toUpperCase())}</span></td>
       <td><select onchange="setUserRole('${u.user_id}',this.value)">
         <option value="encoder"${u.role!=='admin'?' selected':''}>Encoder</option>
         <option value="admin"${u.role==='admin'?' selected':''}>Admin</option>
@@ -450,12 +452,13 @@ async function deleteUser(uid,email){
   catch(e){toast("⚠️ "+(e.message||e))}
 }
 async function addUser(){
-  var email=$("nu-email").value.trim(),pass=$("nu-pass").value,role=$("nu-role").value;
+  var name=$("nu-name").value.trim(),email=$("nu-email").value.trim(),pass=$("nu-pass").value,role=$("nu-role").value;
+  if(!name){toast("Enter the complete name.");return}
   if(!email||!pass){toast("Enter email and a temporary password.");return}
-  try{const {data,error}=await sb.rpc("nmis_admin_create_user",{p_email:email,p_password:pass});if(error)throw error;
+  try{const {data,error}=await sb.rpc("nmis_admin_create_user",{p_email:email,p_password:pass,p_name:name});if(error)throw error;
     if(role==="admin"&&data){await sb.rpc("nmis_admin_set_role",{target:data,new_role:"admin"});}
-    $("nu-email").value="";$("nu-pass").value="";$("nu-role").value="encoder";
-    toast("✅ User created: "+email);loadUsers();
+    $("nu-name").value="";$("nu-email").value="";$("nu-pass").value="";$("nu-role").value="encoder";
+    toast("✅ User created: "+name);loadUsers();
   }catch(e){toast("⚠️ "+(e.message||e))}
 }
 async function signOut(){await sb.auth.signOut();location.reload()}
@@ -484,7 +487,7 @@ function setForm(o){
 function toRow(o){return {nmis_no:o.nmis_no,nmis_suffix:o.nmis_suffix||null,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,establishment:o.establishment||null,source:o.source||"imported",meat:o.meat||[],owner:o.owner||null,destination:o.destination||null,conveyance:o.conveyance||null,mtv:o.mtv||null,date_issued:o.date||null,time_issued:o.time||null,officer:o.officer||null,received:o.received||null}}
 function fromRow(r){return {id:r.id,nmis_no:r.nmis_no||"",nmis_suffix:r.nmis_suffix||"",license:r.license||"",province:r.province||"",city:r.city||"",est_code:r.est_code||"",establishment:r.establishment||"",source:r.source||"imported",meat:r.meat||[],owner:r.owner||"",destination:r.destination||"",conveyance:r.conveyance||"",mtv:r.mtv||"",date:r.date_issued||"",time:r.time_issued||"",officer:r.officer||"",received:r.received||"",created_at:r.created_at}}
 
-function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=nameFromEmail(USER_EMAIL);toast("Cleared. Ready for a new certificate.");showTab("entry")}
+function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=encoderName();toast("Cleared. Ready for a new certificate.");showTab("entry")}
 
 /* ============ Cloud CRUD ============ */
 async function saveRecord(){
