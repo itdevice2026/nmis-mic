@@ -191,7 +191,7 @@
       <label class="fld">Date Issued<input id="f-date" type="date"></label>
       <label class="fld">Time Issued<input id="f-time" placeholder="e.g. 3:32 PM"></label>
       <label class="fld">Certified by (Meat Inspection Officer)<input id="f-officer" placeholder="e.g. Francisco G. Lim"></label>
-      <label class="fld">Received by (Authorized Rep.)<input id="f-received" placeholder="optional printed name"></label>
+      <label class="fld">Received by (Authorized Rep.)<input id="f-received" placeholder="auto: encoder's name (editable)"></label>
     </div>
   </div>
 
@@ -341,7 +341,8 @@ let TBL=loadJSON("nmis_table",null)||deepClone(DEFAULT_TABLE);
 let CAL=loadJSON("nmis_calibration",null)||{paper:"A4",offx:0,offy:0,font:11,fontFamily:"Mono"};
 let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
-let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder";
+let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="";
+function nameFromEmail(e){if(!e)return"";var l=e.split("@")[0].replace(/[._]+/g," ").trim();return l.replace(/\b\w/g,c=>c.toUpperCase());}
 
 /* ============ Helpers ============ */
 function $(id){return document.getElementById(id)}
@@ -391,6 +392,8 @@ async function onSignedIn(session){
   $("auth-screen").style.display="none";
   $("app").style.display="block";
   $("who-email").textContent=session.user.email;
+  USER_EMAIL=session.user.email;
+  if(!$("f-received").value)$("f-received").value=nameFromEmail(USER_EMAIL);
   setCloud(true);
   try{const {data}=await sb.from("nmis_user_roles").select("role").eq("user_id",session.user.id).maybeSingle();ROLE=(data&&data.role)||"encoder";}catch(e){ROLE="encoder";}
   applyRole();
@@ -453,7 +456,7 @@ function setForm(o){
 function toRow(o){return {nmis_no:o.nmis_no,nmis_suffix:o.nmis_suffix||null,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,establishment:o.establishment||null,source:o.source||"imported",meat:o.meat||[],owner:o.owner||null,destination:o.destination||null,conveyance:o.conveyance||null,mtv:o.mtv||null,date_issued:o.date||null,time_issued:o.time||null,officer:o.officer||null,received:o.received||null}}
 function fromRow(r){return {id:r.id,nmis_no:r.nmis_no||"",nmis_suffix:r.nmis_suffix||"",license:r.license||"",province:r.province||"",city:r.city||"",est_code:r.est_code||"",establishment:r.establishment||"",source:r.source||"imported",meat:r.meat||[],owner:r.owner||"",destination:r.destination||"",conveyance:r.conveyance||"",mtv:r.mtv||"",date:r.date_issued||"",time:r.time_issued||"",officer:r.officer||"",received:r.received||"",created_at:r.created_at}}
 
-function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);toast("Cleared. Ready for a new certificate.");showTab("entry")}
+function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=nameFromEmail(USER_EMAIL);toast("Cleared. Ready for a new certificate.");showTab("entry")}
 
 /* ============ Cloud CRUD ============ */
 async function saveRecord(){
