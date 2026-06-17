@@ -170,11 +170,13 @@
   <div class="panel">
     <h2>Meat Described</h2>
     <table class="meat-table" id="meat-tbl">
-      <thead><tr><th style="width:50%">Type of Meat</th><th>Quantity &amp; Weight (Kg)</th><th class="act"></th></tr></thead>
+      <thead><tr>
+        <th style="width:25%">Type of Meat</th><th style="width:25%">Quantity &amp; Weight (Kg)</th>
+        <th style="width:25%">Type of Meat</th><th style="width:25%">Quantity &amp; Weight (Kg)</th>
+      </tr></thead>
       <tbody id="meat-body"></tbody>
     </table>
-    <div style="margin-top:10px"><button class="btn ghost sm" onclick="addMeatRow()">➕ Add row</button></div>
-    <p class="hint">Items fill the printed form column-by-column (left column top-to-bottom, then right column). Up to 14 items fit the official layout.</p>
+    <p class="hint">Two columns, left and right, exactly like the official form (7 lines each). Fill the left column first, then the right.</p>
   </div>
 
   <div class="panel">
@@ -426,15 +428,9 @@ async function setUserRole(uid,role){
 async function signOut(){await sb.auth.signOut();location.reload()}
 
 /* ============ Meat rows ============ */
-function addMeatRow(type="",weight=""){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`<td><input class="m-type" value="${esc(type)}" placeholder="e.g. Beef Cubes"></td>
-    <td><input class="m-weight" value="${esc(weight)}" placeholder="e.g. 1,065 Kgs / 8 Nov 26"></td>
-    <td class="act"><button class="icon-btn" title="Remove" onclick="this.closest('tr').remove()">✕</button></td>`;
-  $("meat-body").appendChild(tr);
-}
-function getMeat(){return [...$("meat-body").querySelectorAll("tr")].map(tr=>({type:tr.querySelector(".m-type").value.trim(),weight:tr.querySelector(".m-weight").value.trim()})).filter(r=>r.type||r.weight)}
-function setMeat(items){$("meat-body").innerHTML="";(items&&items.length?items:[{},{},{}]).forEach(r=>addMeatRow(r.type||"",r.weight||""))}
+function buildMeatGrid(items){items=items||[];const body=$("meat-body");body.innerHTML="";const N=7;for(let r=0;r<N;r++){const L=items[r]||{},R=items[N+r]||{};const tr=document.createElement("tr");tr.innerHTML=`<td><input class="m-ltype" value="${esc(L.type||'')}" placeholder="${r===0?'e.g. Beef Cubes':''}"></td><td><input class="m-lqty" value="${esc(L.weight||'')}" placeholder="${r===0?'e.g. 1,065 Kgs / 8 Nov 26':''}"></td><td><input class="m-rtype" value="${esc(R.type||'')}"></td><td><input class="m-rqty" value="${esc(R.weight||'')}"></td>`;body.appendChild(tr);}}
+function getMeat(){const left=[],right=[];[...$("meat-body").querySelectorAll("tr")].forEach(tr=>{left.push({type:tr.querySelector(".m-ltype").value.trim(),weight:tr.querySelector(".m-lqty").value.trim()});right.push({type:tr.querySelector(".m-rtype").value.trim(),weight:tr.querySelector(".m-rqty").value.trim()});});return left.concat(right);}
+function setMeat(items){buildMeatGrid(items)}
 
 /* ============ Form <-> object ============ */
 const FIELDS=["nmis_no","nmis_suffix","license","province","city","est_code","establishment","owner","destination","conveyance","mtv","date","time","officer","received"];
