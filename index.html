@@ -433,7 +433,7 @@ async function loadUsers(){
     if(!data||!data.length){$("users-list").innerHTML='<div class="empty">No users yet.</div>';return}
     var me=USER_EMAIL.toLowerCase();
     let h='<table class="rec-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th style="width:150px">Set role</th><th style="width:90px"></th></tr></thead><tbody>';
-    data.forEach(u=>{var self=(u.email||'').toLowerCase()===me;h+=`<tr><td>${esc(u.full_name||'')}</td><td>${esc(u.email)}</td><td><span class="pill">${esc((u.role||'encoder').toUpperCase())}</span></td>
+    data.forEach(u=>{var self=(u.email||'').toLowerCase()===me;h+=`<tr><td><input value="${esc(u.full_name||'')}" onchange="setUserName('${u.user_id}',this.value)" placeholder="Complete name" style="width:170px"></td><td>${esc(u.email)}</td><td><span class="pill">${esc((u.role||'encoder').toUpperCase())}</span></td>
       <td><select onchange="setUserRole('${u.user_id}',this.value)">
         <option value="encoder"${u.role!=='admin'?' selected':''}>Encoder</option>
         <option value="admin"${u.role==='admin'?' selected':''}>Admin</option>
@@ -451,6 +451,7 @@ async function deleteUser(uid,email){
   try{const {error}=await sb.rpc("nmis_admin_delete_user",{target:uid});if(error)throw error;toast("User deleted.");loadUsers();}
   catch(e){toast("⚠️ "+(e.message||e))}
 }
+async function setUserName(uid,name){try{const {error}=await sb.rpc("nmis_admin_set_name",{target:uid,p_name:name});if(error)throw error;toast("Name saved.");}catch(e){toast("⚠️ "+(e.message||e))}}
 async function addUser(){
   var name=$("nu-name").value.trim(),email=$("nu-email").value.trim(),pass=$("nu-pass").value,role=$("nu-role").value;
   if(!name){toast("Enter the complete name.");return}
