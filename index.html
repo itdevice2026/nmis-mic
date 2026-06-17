@@ -530,11 +530,13 @@ function fieldNodes(data){
   add("date",fmtDate(data.date));add("time",data.time);add("officer",data.officer);add("received",data.received);
   if(data.source==="domestic")add("src_domestic","X");
   if(data.source==="imported")add("src_imported","X");
-  const items=(data.meat||[]).slice(0,TBL.rowsPerCol*2);const cells=TBL.cells||{};
-  items.forEach((it,i)=>{const col=Math.floor(i/TBL.rowsPerCol),row=i%TBL.rowsPerCol,by=TBL.startY+row*TBL.rowH;
+  const N=TBL.rowsPerCol;const items=(data.meat||[]).slice(0,N*2);const cells=TBL.cells||{};
+  function leftRowY(row){var a=cells["0-"+row+"-type"],b=cells["0-"+row+"-qty"];return (a&&a.y!=null)?a.y:((b&&b.y!=null)?b.y:(TBL.startY+row*TBL.rowH));}
+  items.forEach((it,i)=>{const col=Math.floor(i/N),row=i%N,defY=TBL.startY+row*TBL.rowH;
     const xType=col===0?TBL.colTypeL:TBL.colTypeR,xQty=col===0?TBL.colQtyL:TBL.colQtyR;
-    if(it.type){const sid=col+"-"+row+"-type",o=cells[sid];nodes.push({x:o?o.x:xType,y:o?o.y:by,size:TBL.size,align:"left",key:"meat",mslot:sid,text:it.type});}
-    if(it.weight){const sid=col+"-"+row+"-qty",o=cells[sid];nodes.push({x:o?o.x:xQty,y:o?o.y:by,size:TBL.size,align:"left",key:"meat",mslot:sid,text:it.weight});}});
+    function push(field,defX,text){const sid=col+"-"+row+"-"+field,o=cells[sid];var x=(o&&o.x!=null)?o.x:defX;var y=col===0?((o&&o.y!=null)?o.y:defY):leftRowY(row);nodes.push({x:x,y:y,size:TBL.size,align:"left",key:"meat",mslot:sid,text:text});}
+    if(it.type)push("type",xType,it.type);
+    if(it.weight)push("qty",xQty,it.weight);});
   return nodes;
 }
 function pxToPct(mm,dim){return (mm/dim)*100}
