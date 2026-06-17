@@ -171,12 +171,14 @@
     <h2>Meat Described</h2>
     <table class="meat-table" id="meat-tbl">
       <thead><tr>
-        <th style="width:25%">Type of Meat</th><th style="width:25%">Quantity &amp; Weight (Kg)</th>
-        <th style="width:25%">Type of Meat</th><th style="width:25%">Quantity &amp; Weight (Kg)</th>
+        <th style="width:24%">Type of Meat</th><th style="width:24%">Quantity &amp; Weight (Kg)</th>
+        <th style="width:24%">Type of Meat</th><th style="width:24%">Quantity &amp; Weight (Kg)</th>
+        <th class="act"></th>
       </tr></thead>
       <tbody id="meat-body"></tbody>
     </table>
-    <p class="hint">Two columns, left and right, exactly like the official form (7 lines each). Fill the left column first, then the right.</p>
+    <div style="margin-top:10px"><button class="btn ghost sm" onclick="addMeatRow()">➕ Add row</button></div>
+    <p class="hint">Left and right columns match the official form. Fill the left column first, then the right. Add or remove rows as needed.</p>
   </div>
 
   <div class="panel">
@@ -428,7 +430,10 @@ async function setUserRole(uid,role){
 async function signOut(){await sb.auth.signOut();location.reload()}
 
 /* ============ Meat rows ============ */
-function buildMeatGrid(items){items=items||[];const body=$("meat-body");body.innerHTML="";const N=7;for(let r=0;r<N;r++){const L=items[r]||{},R=items[N+r]||{};const tr=document.createElement("tr");tr.innerHTML=`<td><input class="m-ltype" value="${esc(L.type||'')}" placeholder="${r===0?'e.g. Beef Cubes':''}"></td><td><input class="m-lqty" value="${esc(L.weight||'')}" placeholder="${r===0?'e.g. 1,065 Kgs / 8 Nov 26':''}"></td><td><input class="m-rtype" value="${esc(R.type||'')}"></td><td><input class="m-rqty" value="${esc(R.weight||'')}"></td>`;body.appendChild(tr);}}
+function meatRowHtml(L,R){return `<tr><td><input class="m-ltype" value="${esc((L&&L.type)||'')}" placeholder="Type of meat"></td><td><input class="m-lqty" value="${esc((L&&L.weight)||'')}" placeholder="Qty & weight"></td><td><input class="m-rtype" value="${esc((R&&R.type)||'')}" placeholder="Type of meat"></td><td><input class="m-rqty" value="${esc((R&&R.weight)||'')}" placeholder="Qty & weight"></td><td class="act"><button class="icon-btn" title="Delete row" onclick="delMeatRow(this)">✕</button></td></tr>`;}
+function buildMeatGrid(items){items=items||[];const body=$("meat-body");body.innerHTML="";var rows=Math.max(2,Math.round(items.length/2));for(let r=0;r<rows;r++){body.insertAdjacentHTML("beforeend",meatRowHtml(items[r],items[rows+r]));}}
+function addMeatRow(){$("meat-body").insertAdjacentHTML("beforeend",meatRowHtml({},{}));}
+function delMeatRow(btn){const tb=$("meat-body");if(tb.querySelectorAll("tr").length<=1)return;btn.closest("tr").remove();}
 function getMeat(){const left=[],right=[];[...$("meat-body").querySelectorAll("tr")].forEach(tr=>{left.push({type:tr.querySelector(".m-ltype").value.trim(),weight:tr.querySelector(".m-lqty").value.trim()});right.push({type:tr.querySelector(".m-rtype").value.trim(),weight:tr.querySelector(".m-rqty").value.trim()});});return left.concat(right);}
 function setMeat(items){buildMeatGrid(items)}
 
@@ -530,7 +535,7 @@ function fieldNodes(data){
   add("date",fmtDate(data.date));add("time",data.time);add("officer",data.officer);add("received",data.received);
   if(data.source==="domestic")add("src_domestic","X");
   if(data.source==="imported")add("src_imported","X");
-  const N=TBL.rowsPerCol;const items=(data.meat||[]).slice(0,N*2);const cells=TBL.cells||{};
+  const items=(data.meat||[]);const cells=TBL.cells||{};const N=Math.max(1,Math.round(items.length/2));
   function leftRowY(row){var a=cells["0-"+row+"-type"],b=cells["0-"+row+"-qty"];return (a&&a.y!=null)?a.y:((b&&b.y!=null)?b.y:(TBL.startY+row*TBL.rowH));}
   items.forEach((it,i)=>{const col=Math.floor(i/N),row=i%N,defY=TBL.startY+row*TBL.rowH;
     const xType=col===0?TBL.colTypeL:TBL.colTypeR,xQty=col===0?TBL.colQtyL:TBL.colQtyR;
