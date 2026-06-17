@@ -152,11 +152,11 @@
     <div class="grid g3">
       <label class="fld">NMIS No. <span class="req">*</span><input id="f-nmis_no" placeholder="e.g. 27751596" inputmode="numeric"></label>
       <label class="fld">Suffix<input id="f-nmis_suffix" placeholder="e.g. B" style="text-transform:uppercase"></label>
-      <label class="fld">License to Operate No.<input id="f-license" placeholder="e.g. MCP-156-AA"></label>
+      <label class="fld">License to Operate No.<input id="f-license" list="lic-list" oninput="licLookup()" placeholder="e.g. MCP-156-AA"><datalist id="lic-list"></datalist></label>
       <label class="fld">Province<input id="f-province" placeholder="e.g. NCR"></label>
       <label class="fld">City / Municipality<input id="f-city" placeholder="e.g. Taguig City"></label>
       <label class="fld">Establishment NMIS Code<input id="f-est_code" placeholder="e.g. NMIS-CSW-0522-AAA"></label>
-      <label class="fld" style="grid-column:1 / -1">Name of Establishment<input id="f-establishment" placeholder="e.g. One Stop Warehousing Solution Inc."></label>
+      <label class="fld" style="grid-column:1 / -1">Name of Establishment<input id="f-establishment" list="estab-list" oninput="estabLookup()" placeholder="Type or pick — auto-fills license, province, city"><datalist id="estab-list"></datalist></label>
     </div>
     <div style="margin-top:12px">
       <label class="fld">Source of meat</label>
@@ -343,6 +343,12 @@ let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="";
 function nameFromEmail(e){if(!e)return"";var l=e.split("@")[0].replace(/[._]+/g," ").trim();return l.replace(/\b\w/g,c=>c.toUpperCase());}
+let ESTABS=[];
+async function loadEstablishments(){try{const {data}=await sb.from("nmis_establishments").select("*").order("name");ESTABS=data||[];renderEstabLists();}catch(e){}}
+function renderEstabLists(){var el=$("estab-list"),ll=$("lic-list");if(el)el.innerHTML=ESTABS.map(e=>`<option value="${esc(e.name||"")}"></option>`).join("");if(ll)ll.innerHTML=ESTABS.filter(e=>e.license).map(e=>`<option value="${esc(e.license)}"></option>`).join("");}
+function estabLookup(){var v=$("f-establishment").value.trim().toLowerCase();var e=ESTABS.find(x=>(x.name||"").toLowerCase()===v);if(e){$("f-license").value=e.license||"";$("f-province").value=e.province||"";$("f-city").value=e.city||"";$("f-est_code").value=e.est_code||"";}}
+function licLookup(){var v=$("f-license").value.trim().toLowerCase();var e=ESTABS.find(x=>(x.license||"").toLowerCase()===v);if(e){$("f-establishment").value=e.name||"";$("f-province").value=e.province||"";$("f-city").value=e.city||"";$("f-est_code").value=e.est_code||"";}}
+async function upsertEstablishment(o){if(!o.establishment)return;try{const u=(await sb.auth.getUser()).data.user;await sb.from("nmis_establishments").upsert({name:o.establishment,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,updated_at:new Date().toISOString(),updated_by:u?u.id:null},{onConflict:"name"});loadEstablishments();}catch(e){}}
 
 /* ============ Helpers ============ */
 function $(id){return document.getElementById(id)}
@@ -398,6 +404,7 @@ async function onSignedIn(session){
   try{const {data}=await sb.from("nmis_user_roles").select("role").eq("user_id",session.user.id).maybeSingle();ROLE=(data&&data.role)||"encoder";}catch(e){ROLE="encoder";}
   applyRole();
   await loadSettings();
+  await loadEstablishments();
   await refreshRecords();
 }
 async function loadSettings(){
@@ -474,7 +481,7 @@ async function saveRecord(){
       editingId=data.id;$("editing-banner").style.display="block";$("editing-id").textContent=o.nmis_no;
       toast("✅ Saved to cloud.");
     }
-    setCloud(true);await refreshRecords(true);
+    setCloud(true);await refreshRecords(true);await upsertEstablishment(o);
   }catch(e){setCloud(false);toast("⚠️ Save failed: "+(e.message||e))}
   btn.disabled=false;btn.textContent=old;
 }
