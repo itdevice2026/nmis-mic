@@ -190,7 +190,7 @@
     <h2>Distribution</h2>
     <div class="grid g2">
       <label class="fld">Name of Owner / Dealer<input id="f-owner" placeholder="e.g. Meatplus Trading Corp."></label>
-      <label class="fld">Destination<input id="f-destination" placeholder="e.g. Crystal Q, Navotas City"></label>
+      <label class="fld">Destination<input id="f-destination" list="dest-list" placeholder="Type or pick — saved for next time"><datalist id="dest-list"></datalist></label>
       <label class="fld">Conveyance Used &amp; Plate No.<input id="f-conveyance" placeholder="e.g. NKG-7719"></label>
       <label class="fld">MTV Registration No.<input id="f-mtv" placeholder="e.g. 5-0695-1246"></label>
       <label class="fld">Date Issued<input id="f-date" type="date"></label>
@@ -385,6 +385,9 @@ function renderEstabLists(){var el=$("estab-list"),ll=$("lic-list");if(el)el.inn
 function estabLookup(){var v=$("f-establishment").value.trim().toLowerCase();var e=ESTABS.find(x=>(x.name||"").toLowerCase()===v);if(e){$("f-license").value=e.license||"";$("f-province").value=e.province||"";$("f-city").value=e.city||"";$("f-est_code").value=e.est_code||"";}}
 function licLookup(){var v=$("f-license").value.trim().toLowerCase();var e=ESTABS.find(x=>(x.license||"").toLowerCase()===v);if(e){$("f-establishment").value=e.name||"";$("f-province").value=e.province||"";$("f-city").value=e.city||"";$("f-est_code").value=e.est_code||"";}}
 async function upsertEstablishment(o){if(!o.establishment)return;try{const u=(await sb.auth.getUser()).data.user;await sb.from("nmis_establishments").upsert({name:o.establishment,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,updated_at:new Date().toISOString(),updated_by:u?u.id:null},{onConflict:"name"});loadEstablishments();}catch(e){}}
+let DESTS=[];
+async function loadDestinations(){try{const {data}=await sb.from("nmis_destinations").select("name").order("name");DESTS=data||[];var dl=$("dest-list");if(dl)dl.innerHTML=DESTS.map(d=>`<option value="${esc(d.name||"")}"></option>`).join("");}catch(e){}}
+async function upsertDestination(o){var d=(o.destination||"").trim();if(!d)return;if(DESTS.some(x=>(x.name||"").toLowerCase()===d.toLowerCase()))return;try{const u=(await sb.auth.getUser()).data.user;await sb.from("nmis_destinations").insert({name:d,updated_by:u?u.id:null});loadDestinations();}catch(e){}}
 
 /* ============ Helpers ============ */
 function $(id){return document.getElementById(id)}
@@ -441,6 +444,7 @@ async function onSignedIn(session){
   applyRole();
   await loadSettings();
   await loadEstablishments();
+  await loadDestinations();
   await refreshRecords();
   logActivity("login","");
 }
@@ -565,7 +569,7 @@ async function saveRecord(){
       editingId=data.id;$("editing-banner").style.display="block";$("editing-id").textContent=o.nmis_no;
       toast("✅ Saved to cloud.");logActivity("create_certificate","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));
     }
-    setCloud(true);await refreshRecords(true);await upsertEstablishment(o);
+    setCloud(true);await refreshRecords(true);await upsertEstablishment(o);await upsertDestination(o);
   }catch(e){setCloud(false);toast("⚠️ Save failed: "+(e.message||e))}
   btn.disabled=false;btn.textContent=old;
 }
