@@ -535,13 +535,11 @@ function fieldNodes(data){
   add("date",fmtDate(data.date));add("time",data.time);add("officer",data.officer);add("received",data.received);
   if(data.source==="domestic")add("src_domestic","X");
   if(data.source==="imported")add("src_imported","X");
-  const items=(data.meat||[]);const cells=TBL.cells||{};const N=Math.max(1,Math.round(items.length/2));
-  function leftRowY(row){var a=cells["0-"+row+"-type"],b=cells["0-"+row+"-qty"];return (a&&a.y!=null)?a.y:((b&&b.y!=null)?b.y:(TBL.startY+row*TBL.rowH));}
-  items.forEach((it,i)=>{const col=Math.floor(i/N),row=i%N,defY=TBL.startY+row*TBL.rowH;
+  const items=(data.meat||[]);const N=Math.max(1,Math.round(items.length/2));
+  items.forEach((it,i)=>{const col=Math.floor(i/N),row=i%N,y=TBL.startY+row*TBL.rowH;
     const xType=col===0?TBL.colTypeL:TBL.colTypeR,xQty=col===0?TBL.colQtyL:TBL.colQtyR;
-    function push(field,defX,text){const sid=col+"-"+row+"-"+field,o=cells[sid];var x=(o&&o.x!=null)?o.x:defX;var y=col===0?((o&&o.y!=null)?o.y:defY):leftRowY(row);nodes.push({x:x,y:y,size:TBL.size,align:"left",key:"meat",mslot:sid,text:text});}
-    if(it.type)push("type",xType,it.type);
-    if(it.weight)push("qty",xQty,it.weight);});
+    if(it.type)nodes.push({x:xType,y:y,size:TBL.size,align:"left",key:"meat",mcol:(col===0?"colTypeL":"colTypeR"),mrow:row,text:it.type});
+    if(it.weight)nodes.push({x:xQty,y:y,size:TBL.size,align:"left",key:"meat",mcol:(col===0?"colQtyL":"colQtyR"),mrow:row,text:it.weight});});
   return nodes;
 }
 function pxToPct(mm,dim){return (mm/dim)*100}
@@ -558,19 +556,19 @@ function renderPreviewStage(){
   fieldNodes(data).forEach((n,idx)=>{
     const left=(n.x+pxToPct(CAL.offx,pw))+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";
     const fs=((n.size/11)*CAL.font)*scale*(25.4/72);
-    html+=`<div class="ov-field ${n.align==='center'?'center':''}" data-key="${n.key}" data-mslot="${n.mslot||''}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;
+    html+=`<div class="ov-field ${n.align==='center'?'center':''}" data-key="${n.key}" data-mcol="${n.mcol||''}" data-mrow="${n.mrow==null?'':n.mrow}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;
   });
   stage.innerHTML=html;if(editMode)attachDrag(pw,ph);
 }
 function attachDrag(pw,ph){
   const stage=$("page-preview");
   stage.querySelectorAll(".ov-field").forEach(el=>{
-    el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;const mslot=el.dataset.mslot;
+    el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;const mcol=el.dataset.mcol;const mrow=parseInt(el.dataset.mrow);
       const rect=stage.getBoundingClientRect();
       function move(ev){let x=((ev.clientX-rect.left)/rect.width)*100,y=((ev.clientY-rect.top)/rect.height)*100;
         x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));
         var ax=+(x-pxToPct(CAL.offx,pw)).toFixed(2),ay=+(y-pxToPct(CAL.offy,ph)).toFixed(2);
-        if(key==="meat"){if(mslot){TBL.cells=TBL.cells||{};TBL.cells[mslot]={x:ax,y:ay};}}
+        if(key==="meat"){if(mcol)TBL[mcol]=ax;if(mrow===0)TBL.startY=ay;else if(mrow>0)TBL.rowH=Math.max(0.5,+((ay-TBL.startY)/mrow).toFixed(3));}
         else{MAP[key].x=ax;MAP[key].y=ay;}
         renderPreviewStage();}
       function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_fieldmap",MAP);saveJSON("nmis_table",TBL);saveSettings();toast("Position saved.")}
