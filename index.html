@@ -694,7 +694,7 @@ function renderPreviewStage(){
   const W=Math.min(680,(stage.parentElement.clientWidth-32));const scale=W/pw;
   stage.style.width=W+"px";stage.style.height=(ph*scale)+"px";
   stage.style.backgroundImage=BG?`url(${BG})`:"none";stage.classList.toggle("editing",editMode);
-  let html=gridOn?`<div class="grid-overlay"></div>`:"";const ff=FONTS[CAL.fontFamily]||FONTS.Mono;
+  let html=gridOn?`<div class="grid-overlay"></div>`:"";const ff=(FONTS[CAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
   fieldNodes(data).forEach((n,idx)=>{
     const leftN=(n.x+pxToPct(CAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";
     const fs=((n.size/11)*CAL.font)*scale*(25.4/72);
@@ -732,7 +732,7 @@ function buildPrint(data){
   const [pw,ph]=PAPER[CAL.paper];const root=$("print-page");
   root.style.setProperty("--pw",pw+"mm");root.style.setProperty("--ph",ph+"mm");
   document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
-  let html="";const ff=FONTS[CAL.fontFamily]||FONTS.Mono;
+  let html="";const ff=(FONTS[CAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
   fieldNodes(data).forEach(n=>{const leftN=(n.x+pxToPct(CAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";const fs=((n.size/11)*CAL.font)+"pt";
     let cls=n.align==='center'?'center':'',extra='',fitAttr='';
     if(n.wrapUp){cls+=' up';extra='max-width:'+(n.fitR-leftN)+'%;';}
