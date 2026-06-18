@@ -100,6 +100,13 @@
     .ov-field.center{transform:translate(-50%,-50%)}
     @page{margin:0}
   }
+  .switch{position:relative;display:inline-block;width:42px;height:22px;flex:none}
+  .switch input{opacity:0;width:0;height:0}
+  .switch .slider{position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:22px;transition:.2s}
+  .switch .slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  .switch input:checked+.slider{background:#16a34a}
+  .switch input:checked+.slider:before{transform:translateX(20px)}
+  .switch-wrap{display:inline-flex;align-items:center;gap:8px}
 </style>
 </head>
 <body>
@@ -224,8 +231,7 @@
         <option value="nmis_desc">NMIS No. ↓</option>
       </select>
       <span style="flex:1"></span>
-      <label class="fld" style="flex-direction:row;align-items:center;gap:6px;margin:0"><input type="checkbox" id="rec-auto" onchange="toggleAutoRefresh()" style="width:auto;margin:0"> Auto-refresh</label>
-      <select id="rec-auto-int" onchange="toggleAutoRefresh()" style="width:auto"><option value="15">15s</option><option value="30" selected>30s</option><option value="60">60s</option><option value="120">2m</option></select>
+      <span class="switch-wrap"><label class="switch"><input type="checkbox" id="rec-auto" onchange="toggleAutoRefresh()"><span class="slider"></span></label> Auto-refresh</span>
       <button class="btn ghost sm" onclick="refreshRecords()">🔄 Refresh</button>
       <button class="btn ghost sm" onclick="exportData()">⬇️ Backup (JSON)</button>
     </div>
@@ -586,14 +592,14 @@ async function saveRecord(){
   }catch(e){setCloud(false);toast("⚠️ Save failed: "+(e.message||e))}
   btn.disabled=false;btn.textContent=old;
 }
-let autoTimer=null;
+let autoTimer=null;const AUTO_SEC=30;
 function toggleAutoRefresh(){
   if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
-  var on=$("rec-auto").checked;var sec=parseInt($("rec-auto-int").value,10)||30;
-  try{localStorage.setItem("nmis_auto",on?String(sec):"");}catch(e){}
-  if(on){autoTimer=setInterval(function(){if(USER_ID&&$("view-records").style.display!=="none")refreshRecords(true);},sec*1000);}
+  var on=$("rec-auto").checked;
+  try{localStorage.setItem("nmis_auto",on?"1":"");}catch(e){}
+  if(on){autoTimer=setInterval(function(){if(USER_ID&&$("view-records").style.display!=="none")refreshRecords(true);},AUTO_SEC*1000);}
 }
-function restoreAutoRefresh(){try{var v=localStorage.getItem("nmis_auto");if(v){$("rec-auto").checked=true;$("rec-auto-int").value=v;toggleAutoRefresh();}}catch(e){}}
+function restoreAutoRefresh(){try{if(localStorage.getItem("nmis_auto")){$("rec-auto").checked=true;toggleAutoRefresh();}}catch(e){}}
 function buildSuggestLists(){
   var map={"owner-list":"owner","conv-list":"conveyance","mtv-list":"mtv","officer-list":"officer"};
   Object.keys(map).forEach(function(listId){
