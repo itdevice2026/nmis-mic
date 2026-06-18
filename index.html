@@ -204,7 +204,7 @@
   <div class="panel">
     <div class="toolbar">
       <button class="btn" id="save-btn" onclick="saveRecord()">💾 Save to Cloud</button>
-      <button class="btn alt" onclick="printCertificate()">🖨️ Print Certificate</button>
+      <button class="btn alt" onclick="printSavedCertificate()">🖨️ Print Certificate</button>
       <button class="btn ghost" onclick="goPreview()">👁️ Preview / Align</button>
       <button class="btn ghost" onclick="newCertificate()">🆕 Clear Form</button>
     </div>
@@ -377,6 +377,7 @@ let CAL=loadJSON("nmis_calibration",null)||{paper:"A4",offx:0,offy:0,font:11,fon
 let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
+let dirty=false;
 async function logActivity(action,detail){try{await sb.from("nmis_activity_log").insert({user_id:USER_ID||null,email:USER_EMAIL||null,action:action,detail:detail||null});}catch(e){}}
 function nameFromEmail(e){if(!e)return"";var l=e.split("@")[0].replace(/[._]+/g," ").trim();return l.replace(/\b\w/g,c=>c.toUpperCase());}
 function encoderName(){return USER_NAME||nameFromEmail(USER_EMAIL);}
@@ -559,7 +560,7 @@ function setForm(o){
 function toRow(o){return {nmis_no:o.nmis_no,nmis_suffix:o.nmis_suffix||null,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,establishment:o.establishment||null,source:o.source||"imported",meat:o.meat||[],owner:o.owner||null,destination:o.destination||null,conveyance:o.conveyance||null,mtv:o.mtv||null,date_issued:o.date||null,time_issued:o.time||null,officer:o.officer||null,received:o.received||null,encoder_name:o.received||null}}
 function fromRow(r){return {id:r.id,nmis_no:r.nmis_no||"",nmis_suffix:r.nmis_suffix||"",license:r.license||"",province:r.province||"",city:r.city||"",est_code:r.est_code||"",establishment:r.establishment||"",source:r.source||"imported",meat:r.meat||[],owner:r.owner||"",destination:r.destination||"",conveyance:r.conveyance||"",mtv:r.mtv||"",date:r.date_issued||"",time:r.time_issued||"",officer:r.officer||"",received:r.received||"",encoder_name:r.encoder_name||"",created_by:r.created_by||"",created_at:r.created_at}}
 
-function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=isGeneric()?"":encoderName();toast("Cleared. Ready for a new certificate.");showTab("entry")}
+function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=isGeneric()?"":encoderName();dirty=false;toast("Cleared. Ready for a new certificate.");showTab("entry")}
 
 /* ============ Cloud CRUD ============ */
 async function saveRecord(){
@@ -576,7 +577,7 @@ async function saveRecord(){
       editingId=data.id;$("editing-banner").style.display="block";$("editing-id").textContent=o.nmis_no;
       toast("✅ Saved to cloud.");logActivity("create_certificate","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));
     }
-    setCloud(true);await refreshRecords(true);await upsertEstablishment(o);await upsertDestination(o);
+    dirty=false;setCloud(true);await refreshRecords(true);await upsertEstablishment(o);await upsertDestination(o);
   }catch(e){setCloud(false);toast("⚠️ Save failed: "+(e.message||e))}
   btn.disabled=false;btn.textContent=old;
 }
@@ -608,7 +609,7 @@ async function deleteRecord(id){
     if(editingId===id)newCertificate();await refreshRecords(true);renderRecords();toast("Record deleted.");
   }catch(e){toast("⚠️ Delete failed: "+(e.message||e))}
 }
-function editRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;setForm(r);editingId=id;$("editing-banner").style.display="block";$("editing-id").textContent=r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):"");showTab("entry");window.scrollTo(0,0)}
+function editRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;setForm(r);editingId=id;dirty=false;$("editing-banner").style.display="block";$("editing-id").textContent=r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):"");showTab("entry");window.scrollTo(0,0)}
 function printRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;buildPrint(r);logActivity("print","NMIS "+r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):""));window.print()}
 
 function renderRecords(){
@@ -711,12 +712,14 @@ function buildPrint(data){
   root.innerHTML=html;
 }
 function printCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}buildPrint(o);logActivity("print","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));window.print()}
+function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}if(!editingId){toast("⚠️ Save the transaction first, then print.");return}if(dirty){toast("⚠️ You have unsaved changes — save first, then print.");return}buildPrint(o);logActivity("print","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));window.print()}
 
 /* ============ Init ============ */
 (async function init(){
   const [pw,ph]=PAPER[CAL.paper];
   document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
   setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);loadCalUI();
+  var ve=$("view-entry");if(ve)ve.addEventListener("input",function(){dirty=true});
   window.addEventListener("resize",()=>{if($("view-calib").style.display!=="none")renderPreviewStage()});
   if(!sb){$("auth-err").textContent="Could not load cloud library. Check your internet connection.";$("auth-err").style.display="block";return}
   const {data}=await sb.auth.getSession();
