@@ -194,7 +194,7 @@
       <label class="fld">Conveyance Used &amp; Plate No.<input id="f-conveyance" placeholder="e.g. NKG-7719"></label>
       <label class="fld">MTV Registration No.<input id="f-mtv" placeholder="e.g. 5-0695-1246"></label>
       <label class="fld">Date Issued<input id="f-date" type="date"></label>
-      <label class="fld">Time Issued<input id="f-time" placeholder="e.g. 3:32 PM"></label>
+      <label class="fld">Time Issued<input id="f-time" type="time"></label>
       <label class="fld">Certified by (Meat Inspection Officer)<input id="f-officer" placeholder="e.g. Francisco G. Lim"></label>
       <label class="fld">Received by (Encoder)<input id="f-received" title="Encoder name — admins can change this" placeholder="auto: encoder's name"></label>
     </div>
@@ -400,6 +400,8 @@ function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;"
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2400)}
 function fmtDate(iso){if(!iso)return "";const [y,m,d]=iso.split("-");if(!d)return iso;const mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return `${mo[+m-1]} ${+d}, ${y}`}
 function setCloud(ok){const d=$("cloud-dot");if(d){d.classList.toggle("off",!ok);d.title=ok?"Connected to cloud":"Cloud error"}}
+function to12h(v){if(!v)return"";var p=v.split(":");var h=parseInt(p[0],10),m=p[1]||"00";if(isNaN(h))return v;var ap=h>=12?"PM":"AM";var hh=h%12;if(hh===0)hh=12;return hh+":"+String(m).padStart(2,"0")+" "+ap;}
+function to24h(s){if(!s)return"";var m=String(s).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);if(!m)return"";var h=+m[1],mi=m[2],ap=(m[3]||"").toUpperCase();if(ap==="PM"&&h<12)h+=12;if(ap==="AM"&&h===12)h=0;return String(h).padStart(2,"0")+":"+mi;}
 
 /* ============ AUTH ============ */
 function toggleAuthMode(){
@@ -541,11 +543,13 @@ function setMeat(items){buildMeatGrid(items)}
 const FIELDS=["nmis_no","nmis_suffix","license","province","city","est_code","establishment","owner","destination","conveyance","mtv","date","time","officer","received"];
 function getForm(){
   const o={};FIELDS.forEach(f=>o[f]=$("f-"+f).value.trim());
+  o.time=to12h($("f-time").value);
   o.source=(document.querySelector('input[name=source]:checked')||{}).value||"imported";
   o.meat=getMeat();return o;
 }
 function setForm(o){
   FIELDS.forEach(f=>$("f-"+f).value=o[f]||"");
+  $("f-time").value=to24h(o.time||"");
   $("f-received").value=o.encoder_name||o.received||"";
   document.querySelector(`input[name=source][value="${o.source||'imported'}"]`).checked=true;
   setMeat(o.meat);
