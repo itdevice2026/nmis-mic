@@ -667,7 +667,7 @@ function goPreview(){showTab("calib")}
 /* ============ Overlay build (shared) ============ */
 function fieldNodes(data){
   const nodes=[];
-  function add(key,value){if(value==null||value==="")return;const m=MAP[key];if(!m)return;nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,fitR:m.fitR,key,text:value})}
+  function add(key,value){if(value==null||value==="")return;const m=MAP[key];if(!m)return;const fr=(m.fitR!=null?m.fitR:(DEFAULT_MAP[key]&&DEFAULT_MAP[key].fitR));nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,fitR:fr,key,text:value})}
   /* nmis_no & nmis_suffix are intentionally NOT printed — pre-printed on the official form; kept in records only */
   add("province",data.province);add("city",data.city);
   add("establishment",data.establishment);add("est_code",data.est_code);add("license",data.license);
