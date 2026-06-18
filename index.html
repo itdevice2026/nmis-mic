@@ -566,6 +566,9 @@ function newCertificate(){editingId=null;$("editing-banner").style.display="none
 async function saveRecord(){
   const o=getForm();
   if(!o.nmis_no){toast("⚠️ NMIS No. is required.");$("f-nmis_no").focus();return}
+  const dupKey=(o.nmis_no||"").trim().toLowerCase()+"|"+((o.nmis_suffix||"").trim().toLowerCase());
+  const dup=RECORDS.find(r=>r.id!==editingId&&((r.nmis_no||"").trim().toLowerCase()+"|"+((r.nmis_suffix||"").trim().toLowerCase()))===dupKey);
+  if(dup){toast("⚠️ NMIS No. "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):"")+" already exists. Use a different number or open the existing record.");$("f-nmis_no").focus();return}
   const btn=$("save-btn");btn.disabled=true;const old=btn.textContent;btn.innerHTML='<span class="spinner"></span> Saving…';
   try{
     if(editingId){
