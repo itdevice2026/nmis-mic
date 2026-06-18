@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!--APPVER:33-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -388,6 +389,14 @@ let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
+const APP_VERSION="33";
+async function checkVersion(){
+  try{
+    const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
+    const m=t.match(/APPVER:(\d+)/);
+    if(m&&m[1]!==APP_VERSION){location.replace(location.origin+location.pathname+"?v="+m[1]);}
+  }catch(e){}
+}
 async function logActivity(action,detail){try{await sb.from("nmis_activity_log").insert({user_id:USER_ID||null,email:USER_EMAIL||null,action:action,detail:detail||null});}catch(e){}}
 function nameFromEmail(e){if(!e)return"";var l=e.split("@")[0].replace(/[._]+/g," ").trim();return l.replace(/\b\w/g,c=>c.toUpperCase());}
 function encoderName(){return USER_NAME||nameFromEmail(USER_EMAIL);}
@@ -760,6 +769,8 @@ function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ 
   setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);loadCalUI();
   var ve=$("view-entry");if(ve)ve.addEventListener("input",function(){dirty=true});
   restoreAutoRefresh();
+  checkVersion();setInterval(checkVersion,120000);
+  document.addEventListener("visibilitychange",function(){if(!document.hidden)checkVersion()});
   window.addEventListener("resize",()=>{if($("view-calib").style.display!=="none")renderPreviewStage()});
   if(!sb){$("auth-err").textContent="Could not load cloud library. Check your internet connection.";$("auth-err").style.display="block";return}
   const {data}=await sb.auth.getSession();
