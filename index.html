@@ -182,6 +182,7 @@
       </tr></thead>
       <tbody id="meat-body"></tbody>
     </table>
+    <datalist id="meat-list"></datalist>
     <div style="margin-top:10px"><button class="btn ghost sm" onclick="addMeatRow()">➕ Add row</button></div>
     <p class="hint">Left and right columns match the official form. Fill the left column first, then the right. Add or remove rows as needed.</p>
   </div>
@@ -532,7 +533,7 @@ async function changePwd(){
 }
 
 /* ============ Meat rows ============ */
-function meatRowHtml(L,R){return `<tr><td><input class="m-ltype" value="${esc((L&&L.type)||'')}" placeholder="Type of meat"></td><td><input class="m-lqty" value="${esc((L&&L.weight)||'')}" placeholder="Qty & weight"></td><td><input class="m-rtype" value="${esc((R&&R.type)||'')}" placeholder="Type of meat"></td><td><input class="m-rqty" value="${esc((R&&R.weight)||'')}" placeholder="Qty & weight"></td><td class="act"><button class="icon-btn" title="Delete row" onclick="delMeatRow(this)">✕</button></td></tr>`;}
+function meatRowHtml(L,R){return `<tr><td><input class="m-ltype" list="meat-list" value="${esc((L&&L.type)||'')}" placeholder="Type of meat"></td><td><input class="m-lqty" value="${esc((L&&L.weight)||'')}" placeholder="Qty & weight"></td><td><input class="m-rtype" list="meat-list" value="${esc((R&&R.type)||'')}" placeholder="Type of meat"></td><td><input class="m-rqty" value="${esc((R&&R.weight)||'')}" placeholder="Qty & weight"></td><td class="act"><button class="icon-btn" title="Delete row" onclick="delMeatRow(this)">✕</button></td></tr>`;}
 function buildMeatGrid(items){items=items||[];const body=$("meat-body");body.innerHTML="";var rows=Math.max(2,Math.round(items.length/2));for(let r=0;r<rows;r++){body.insertAdjacentHTML("beforeend",meatRowHtml(items[r],items[rows+r]));}}
 function addMeatRow(){$("meat-body").insertAdjacentHTML("beforeend",meatRowHtml({},{}));}
 function delMeatRow(btn){const tb=$("meat-body");if(tb.querySelectorAll("tr").length<=1)return;btn.closest("tr").remove();}
@@ -587,6 +588,8 @@ function buildSuggestLists(){
     opts.sort(function(a,b){return a.localeCompare(b)});
     dl.innerHTML=opts.map(function(v){return '<option value="'+esc(v)+'"></option>'}).join("");
   });
+  var mdl=$("meat-list");
+  if(mdl){var ms={},mo=[];RECORDS.forEach(function(r){(r.meat||[]).forEach(function(m){var v=((m&&m.type)||"").trim();var k=v.toLowerCase();if(v&&!ms[k]){ms[k]=1;mo.push(v);}});});mo.sort(function(a,b){return a.localeCompare(b)});mdl.innerHTML=mo.map(function(v){return '<option value="'+esc(v)+'"></option>'}).join("");}
 }
 async function refreshRecords(silent){
   try{
