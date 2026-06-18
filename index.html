@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:38-->
+<!--APPVER:39-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -389,7 +389,7 @@ let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
-const APP_VERSION="38";
+const APP_VERSION="39";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -653,11 +653,11 @@ function renderRecords(){
     const na=parseInt(a.nmis_no)||0,nb=parseInt(b.nmis_no)||0;return sort==="nmis_asc"?na-nb:nb-na;
   });
   if(!list.length){$("rec-list").innerHTML=`<div class="empty">${RECORDS.length?"No records match your search.":"No certificates yet. Fill the form and click “Save to Cloud.”"}</div>`;return}
-  let h=`<table class="rec-table"><thead><tr><th>NMIS No.</th><th>Date</th><th>Establishment</th><th>Owner / Dealer</th><th>Destination</th><th>Encoded by</th><th style="width:200px">Actions</th></tr></thead><tbody>`;
+  let h=`<table class="rec-table"><thead><tr><th>NMIS No.</th><th>Date</th><th>Establishment</th><th>Owner / Dealer</th><th>Destination</th><th>Encoded by</th><th>Timestamp</th><th style="width:200px">Actions</th></tr></thead><tbody>`;
   list.forEach(r=>{h+=`<tr>
     <td><b>${esc(r.nmis_no)}${r.nmis_suffix?("-"+esc(r.nmis_suffix)):""}</b></td>
     <td>${esc(fmtDate(r.date))}<br><span class="pill">${esc((r.source||"").toUpperCase())}</span></td>
-    <td>${esc(r.establishment)}</td><td>${esc(r.owner)}</td><td>${esc(r.destination)}</td><td>${esc(r.encoder_name||r.received||"")}</td>
+    <td>${esc(r.establishment)}</td><td>${esc(r.owner)}</td><td>${esc(r.destination)}</td><td>${esc(r.encoder_name||r.received||"")}</td><td>${r.created_at?esc(fmtDateTime(r.created_at)):""}</td>
     <td><div class="rec-actions">
       <button class="btn alt sm" onclick="printRecord('${r.id}')">🖨️ Print</button>
       ${(isAdmin()||r.created_by===USER_ID)?`<button class="btn ghost sm" onclick="editRecord('${r.id}')">✏️ Edit</button>`:""}
