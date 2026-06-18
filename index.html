@@ -196,7 +196,7 @@
       <label class="fld">Date Issued<input id="f-date" type="date"></label>
       <label class="fld">Time Issued<input id="f-time" placeholder="e.g. 3:32 PM"></label>
       <label class="fld">Certified by (Meat Inspection Officer)<input id="f-officer" placeholder="e.g. Francisco G. Lim"></label>
-      <label class="fld">Received by (Encoder)<input id="f-received" readonly title="Automatically set to the encoder; stays with the original encoder" style="background:#f1f5f9" placeholder="auto: encoder's name"></label>
+      <label class="fld">Received by (Encoder)<input id="f-received" title="Encoder name — admins can change this" placeholder="auto: encoder's name"></label>
     </div>
   </div>
 
@@ -457,7 +457,7 @@ let _setTimer=null;
 function saveSettings(){if(!isAdmin())return;clearTimeout(_setTimer);_setTimer=setTimeout(async()=>{try{const u=(await sb.auth.getUser()).data.user;const {error}=await sb.from("nmis_settings").upsert({id:"print",cal:CAL,fieldmap:MAP,tbl:TBL,updated_at:new Date().toISOString(),updated_by:u?u.id:null});if(error)throw error;}catch(e){toast("⚠️ Couldn't save alignment: "+(e.message||e));}},600);}
 function applyAlignmentLock(){var ro=!isAdmin();["cal-paper","cal-offx","cal-offy","cal-font","cal-fontfam"].forEach(id=>{var el=$(id);if(el)el.disabled=ro;});["cal-refimg","cal-helpers","cal-reset"].forEach(id=>{var el=$(id);if(el)el.style.display=ro?"none":"";});var n=$("align-note");if(n)n.style.display=ro?"block":"none";if(ro)editMode=false;}
 function isAdmin(){return ROLE==="admin"}
-function applyRole(){var b=$("role-badge");if(b){b.textContent=ROLE.toUpperCase();b.style.background=isAdmin()?"#dcfce7":"#e0e7ff";b.style.color=isAdmin()?"#166534":"#3730a3";}var tu=$("tab-users");if(tu)tu.style.display=isAdmin()?"":"none";var td=$("tab-dash");if(td)td.style.display=isAdmin()?"":"none";}
+function applyRole(){var b=$("role-badge");if(b){b.textContent=ROLE.toUpperCase();b.style.background=isAdmin()?"#dcfce7":"#e0e7ff";b.style.color=isAdmin()?"#166534":"#3730a3";}var tu=$("tab-users");if(tu)tu.style.display=isAdmin()?"":"none";var td=$("tab-dash");if(td)td.style.display=isAdmin()?"":"none";var fr=$("f-received");if(fr){fr.readOnly=!isAdmin();fr.style.background=isAdmin()?"":"#f1f5f9";}}
 function dashCard(label,val){return `<div class="panel" style="margin:0;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--brand-d)">${val}</div><div class="hint">${esc(label)}</div></div>`;}
 function prettyAction(a){return ({login:"Login",create_certificate:"Created cert",update_certificate:"Updated cert",delete_certificate:"Deleted cert",print:"Printed",add_user:"Added user",delete_user:"Deleted user",set_role:"Set role",change_password:"Changed password"}[a]||a);}
 function fmtDateTime(iso){if(!iso)return"";try{return new Date(iso).toLocaleString()}catch(e){return iso}}
@@ -549,7 +549,7 @@ function setForm(o){
   setMeat(o.meat);
 }
 /* DB row uses date_issued/time_issued */
-function toRow(o){return {nmis_no:o.nmis_no,nmis_suffix:o.nmis_suffix||null,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,establishment:o.establishment||null,source:o.source||"imported",meat:o.meat||[],owner:o.owner||null,destination:o.destination||null,conveyance:o.conveyance||null,mtv:o.mtv||null,date_issued:o.date||null,time_issued:o.time||null,officer:o.officer||null,received:o.received||null}}
+function toRow(o){return {nmis_no:o.nmis_no,nmis_suffix:o.nmis_suffix||null,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,establishment:o.establishment||null,source:o.source||"imported",meat:o.meat||[],owner:o.owner||null,destination:o.destination||null,conveyance:o.conveyance||null,mtv:o.mtv||null,date_issued:o.date||null,time_issued:o.time||null,officer:o.officer||null,received:o.received||null,encoder_name:o.received||null}}
 function fromRow(r){return {id:r.id,nmis_no:r.nmis_no||"",nmis_suffix:r.nmis_suffix||"",license:r.license||"",province:r.province||"",city:r.city||"",est_code:r.est_code||"",establishment:r.establishment||"",source:r.source||"imported",meat:r.meat||[],owner:r.owner||"",destination:r.destination||"",conveyance:r.conveyance||"",mtv:r.mtv||"",date:r.date_issued||"",time:r.time_issued||"",officer:r.officer||"",received:r.received||"",encoder_name:r.encoder_name||"",created_at:r.created_at}}
 
 function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=encoderName();toast("Cleared. Ready for a new certificate.");showTab("entry")}
@@ -565,7 +565,7 @@ async function saveRecord(){
       const {error}=await sb.from(TABLE).update(toRow(o)).eq("id",editingId);
       if(error)throw error;toast("✅ Updated in cloud.");logActivity("update_certificate","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));
     }else{
-      const {data,error}=await sb.from(TABLE).insert(Object.assign(toRow(o),{encoder_name:encoderName()})).select().single();
+      const {data,error}=await sb.from(TABLE).insert(toRow(o)).select().single();
       if(error)throw error;
       editingId=data.id;$("editing-banner").style.display="block";$("editing-id").textContent=o.nmis_no;
       toast("✅ Saved to cloud.");logActivity("create_certificate","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));
