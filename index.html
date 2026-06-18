@@ -189,13 +189,13 @@
   <div class="panel">
     <h2>Distribution</h2>
     <div class="grid g2">
-      <label class="fld">Name of Owner / Dealer<input id="f-owner" placeholder="e.g. Meatplus Trading Corp."></label>
+      <label class="fld">Name of Owner / Dealer<input id="f-owner" list="owner-list" placeholder="Type or pick — saved for next time"><datalist id="owner-list"></datalist></label>
       <label class="fld">Destination<input id="f-destination" list="dest-list" placeholder="Type or pick — saved for next time"><datalist id="dest-list"></datalist></label>
-      <label class="fld">Conveyance Used &amp; Plate No.<input id="f-conveyance" placeholder="e.g. NKG-7719"></label>
-      <label class="fld">MTV Registration No.<input id="f-mtv" placeholder="e.g. 5-0695-1246"></label>
+      <label class="fld">Conveyance Used &amp; Plate No.<input id="f-conveyance" list="conv-list" placeholder="Type or pick — saved for next time"><datalist id="conv-list"></datalist></label>
+      <label class="fld">MTV Registration No.<input id="f-mtv" list="mtv-list" placeholder="Type or pick — saved for next time"><datalist id="mtv-list"></datalist></label>
       <label class="fld">Date Issued<input id="f-date" type="date"></label>
       <label class="fld">Time Issued<input id="f-time" type="time"></label>
-      <label class="fld">Certified by (Meat Inspection Officer)<input id="f-officer" placeholder="e.g. Francisco G. Lim"></label>
+      <label class="fld">Certified by (Meat Inspection Officer)<input id="f-officer" list="officer-list" placeholder="Type or pick — saved for next time"><datalist id="officer-list"></datalist></label>
       <label class="fld">Received by (Encoder)<input id="f-received" title="Encoder name — admins can change this" placeholder="auto: encoder's name"></label>
     </div>
   </div>
@@ -579,11 +579,20 @@ async function saveRecord(){
   }catch(e){setCloud(false);toast("⚠️ Save failed: "+(e.message||e))}
   btn.disabled=false;btn.textContent=old;
 }
+function buildSuggestLists(){
+  var map={"owner-list":"owner","conv-list":"conveyance","mtv-list":"mtv","officer-list":"officer"};
+  Object.keys(map).forEach(function(listId){
+    var dl=$(listId);if(!dl)return;var f=map[listId];var seen={},opts=[];
+    RECORDS.forEach(function(r){var v=(r[f]||"").trim();var k=v.toLowerCase();if(v&&!seen[k]){seen[k]=1;opts.push(v);}});
+    opts.sort(function(a,b){return a.localeCompare(b)});
+    dl.innerHTML=opts.map(function(v){return '<option value="'+esc(v)+'"></option>'}).join("");
+  });
+}
 async function refreshRecords(silent){
   try{
     const {data,error}=await sb.from(TABLE).select("*").order("created_at",{ascending:false});
     if(error)throw error;
-    RECORDS=(data||[]).map(fromRow);setCloud(true);
+    RECORDS=(data||[]).map(fromRow);setCloud(true);buildSuggestLists();
     if($("view-records").style.display!=="none")renderRecords();
     if(!silent && $("view-records").style.display!=="none")toast("Records refreshed.");
   }catch(e){setCloud(false);$("rec-list").innerHTML=`<div class="empty">⚠️ Could not load records: ${esc(e.message||e)}</div>`}
