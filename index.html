@@ -360,17 +360,17 @@ const FONTS = {Mono:'"Courier New",monospace', Sans:'Arial,Helvetica,sans-serif'
 const DEFAULT_MAP = {
   nmis_no:{label:"NMIS No.",x:62.0,y:12.6,size:15,align:"left",bold:true},
   nmis_suffix:{label:"Suffix",x:90.0,y:12.6,size:13,align:"center",bold:true},
-  province:{label:"Province",x:20.0,y:17.6,size:11,align:"left"},
-  city:{label:"City/Municipality",x:74.0,y:17.6,size:11,align:"left"},
-  establishment:{label:"Establishment",x:31.0,y:20.6,size:10.5,align:"left"},
+  province:{label:"Province",x:20.0,y:17.6,size:11,align:"left",fitR:55},
+  city:{label:"City/Municipality",x:74.0,y:17.6,size:11,align:"left",fitR:99},
+  establishment:{label:"Establishment",x:31.0,y:20.6,size:10.5,align:"left",fitR:60},
   est_code:{label:"Est. NMIS Code",x:2.0,y:24.5,size:9.5,align:"left"},
-  license:{label:"License No.",x:80.0,y:20.6,size:11,align:"left"},
+  license:{label:"License No.",x:80.0,y:20.6,size:11,align:"left",fitR:99},
   src_domestic:{label:"Domestic mark",x:52.6,y:36.4,size:12,align:"center",bold:true},
   src_imported:{label:"Imported mark",x:62.8,y:36.4,size:12,align:"center",bold:true},
-  owner:{label:"Owner/Dealer",x:41.0,y:72.4,size:11,align:"left"},
-  destination:{label:"Destination",x:80.0,y:72.4,size:11,align:"left"},
-  conveyance:{label:"Conveyance/Plate",x:42.0,y:75.0,size:11,align:"left"},
-  mtv:{label:"MTV Reg. No.",x:82.0,y:75.0,size:11,align:"left"},
+  owner:{label:"Owner/Dealer",x:41.0,y:72.4,size:11,align:"left",fitR:62},
+  destination:{label:"Destination",x:80.0,y:72.4,size:11,align:"left",fitR:99},
+  conveyance:{label:"Conveyance/Plate",x:42.0,y:75.0,size:11,align:"left",fitR:78},
+  mtv:{label:"MTV Reg. No.",x:82.0,y:75.0,size:11,align:"left",fitR:99},
   date:{label:"Date Issued",x:23.0,y:77.6,size:11,align:"left"},
   time:{label:"Time Issued",x:58.0,y:77.6,size:11,align:"left"},
   officer:{label:"Officer name",x:63.0,y:85.8,size:11,align:"center",bold:true},
@@ -667,7 +667,7 @@ function goPreview(){showTab("calib")}
 /* ============ Overlay build (shared) ============ */
 function fieldNodes(data){
   const nodes=[];
-  function add(key,value){if(value==null||value==="")return;const m=MAP[key];if(!m)return;nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,key,text:value})}
+  function add(key,value){if(value==null||value==="")return;const m=MAP[key];if(!m)return;nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,fitR:m.fitR,key,text:value})}
   /* nmis_no & nmis_suffix are intentionally NOT printed — pre-printed on the official form; kept in records only */
   add("province",data.province);add("city",data.city);
   add("establishment",data.establishment);add("est_code",data.est_code);add("license",data.license);
@@ -694,11 +694,12 @@ function renderPreviewStage(){
   stage.style.backgroundImage=BG?`url(${BG})`:"none";stage.classList.toggle("editing",editMode);
   let html=gridOn?`<div class="grid-overlay"></div>`:"";const ff=FONTS[CAL.fontFamily]||FONTS.Mono;
   fieldNodes(data).forEach((n,idx)=>{
-    const left=(n.x+pxToPct(CAL.offx,pw))+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";
+    const leftN=(n.x+pxToPct(CAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";
     const fs=((n.size/11)*CAL.font)*scale*(25.4/72);
-    html+=`<div class="ov-field ${n.align==='center'?'center':''}" data-key="${n.key}" data-mcol="${n.mcol||''}" data-mrow="${n.mrow==null?'':n.mrow}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;
+    const fitAttr=(n.fitR&&!editMode)?` data-x="${leftN}" data-fitr="${n.fitR}"`:"";
+    html+=`<div class="ov-field ${n.align==='center'?'center':''}"${fitAttr} data-key="${n.key}" data-mcol="${n.mcol||''}" data-mrow="${n.mrow==null?'':n.mrow}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;
   });
-  stage.innerHTML=html;if(editMode)attachDrag(pw,ph);
+  stage.innerHTML=html;if(editMode)attachDrag(pw,ph);else fitFields(stage);
 }
 function attachDrag(pw,ph){
   const stage=$("page-preview");
@@ -728,9 +729,20 @@ function buildPrint(data){
   root.style.setProperty("--pw",pw+"mm");root.style.setProperty("--ph",ph+"mm");
   document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
   let html="";const ff=FONTS[CAL.fontFamily]||FONTS.Mono;
-  fieldNodes(data).forEach(n=>{const left=(n.x+pxToPct(CAL.offx,pw))+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";const fs=((n.size/11)*CAL.font)+"pt";
-    html+=`<div class="ov-field ${n.align==='center'?'center':''}" style="left:${left};top:${top};font-size:${fs};font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`});
+  fieldNodes(data).forEach(n=>{const leftN=(n.x+pxToPct(CAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";const fs=((n.size/11)*CAL.font)+"pt";
+    const fitAttr=n.fitR?` data-x="${leftN}" data-fitr="${n.fitR}"`:"";
+    html+=`<div class="ov-field ${n.align==='center'?'center':''}"${fitAttr} style="left:${left};top:${top};font-size:${fs};font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`});
   root.innerHTML=html;
+  const pr=$("print-root");pr.style.cssText="display:block;position:absolute;left:-10000px;top:0";root.style.width=pw+"mm";root.style.height=ph+"mm";root.style.overflow="hidden";
+  fitFields(root);
+  pr.style.cssText="";
+}
+function fitFields(container){
+  var W=container.clientWidth;if(!W)return;
+  container.querySelectorAll('.ov-field[data-fitr]').forEach(function(el){
+    var x=parseFloat(el.dataset.x),r=parseFloat(el.dataset.fitr);var avail=W*(r-x)/100;if(avail<=0)return;
+    var w=el.scrollWidth;if(w>avail){var cur=parseFloat(getComputedStyle(el).fontSize);el.style.fontSize=Math.max(5,cur*avail/w)+'px';}
+  });
 }
 function printCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}buildPrint(o);logActivity("print","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));window.print()}
 function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}if(!editingId){toast("⚠️ Save the transaction first, then print.");return}if(dirty){toast("⚠️ You have unsaved changes — save first, then print.");return}buildPrint(o);logActivity("print","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));window.print()}
