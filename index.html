@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:35-->
+<!--APPVER:36-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -389,7 +389,7 @@ let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
-const APP_VERSION="35";
+const APP_VERSION="36";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -707,10 +707,10 @@ function renderPreviewStage(){
   fieldNodes(data).forEach((n,idx)=>{
     const leftN=(n.x+pxToPct(CAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";
     const fs=((n.size/11)*CAL.font)*scale*(25.4/72);
-    let cls=n.align==='center'?'center':'',extra='',fitAttr='';
-    if(n.wrapUp){extra='white-space:normal;width:'+(n.fitR-leftN)+'%;transform:translate(-2px,-100%);line-height:1.15;';}
+    let cls=n.align==='center'?'center':'',extra='',fitAttr='',content=esc(n.text);
+    if(n.wrapUp){extra='white-space:normal;transform:translate(-2px,-100%);line-height:1.15;';content=wrapText(n.text,16).map(esc).join('<br>');}
     else if(n.fitR){fitAttr=` data-x="${leftN}" data-fitr="${n.fitR}"`;}
-    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" data-mcol="${n.mcol||''}" data-mrow="${n.mrow==null?'':n.mrow}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${extra}${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;
+    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" data-mcol="${n.mcol||''}" data-mrow="${n.mrow==null?'':n.mrow}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${extra}${n.bold?'font-weight:700':''}">${content}</div>`;
   });
   stage.innerHTML=html;fitFields(stage);if(editMode)attachDrag(pw,ph);
 }
@@ -743,15 +743,16 @@ function buildPrint(data){
   document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
   let html="";const ff=(FONTS[CAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
   fieldNodes(data).forEach(n=>{const leftN=(n.x+pxToPct(CAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CAL.offy,ph))+"%";const fs=((n.size/11)*CAL.font)+"pt";
-    let cls=n.align==='center'?'center':'',extra='',fitAttr='';
-    if(n.wrapUp){extra='white-space:normal;width:'+(n.fitR-leftN)+'%;transform:translate(-2px,-100%);line-height:1.15;';}
+    let cls=n.align==='center'?'center':'',extra='',fitAttr='',content=esc(n.text);
+    if(n.wrapUp){extra='white-space:normal;transform:translate(-2px,-100%);line-height:1.15;';content=wrapText(n.text,16).map(esc).join('<br>');}
     else if(n.fitR){fitAttr=` data-x="${leftN}" data-fitr="${n.fitR}"`;}
-    html+=`<div class="ov-field ${cls}"${fitAttr} style="left:${left};top:${top};font-size:${fs};font-family:${ff};${extra}${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`});
+    html+=`<div class="ov-field ${cls}"${fitAttr} style="left:${left};top:${top};font-size:${fs};font-family:${ff};${extra}${n.bold?'font-weight:700':''}">${content}</div>`});
   root.innerHTML=html;
   const pr=$("print-root");pr.style.cssText="display:block;position:absolute;left:-10000px;top:0";root.style.width=pw+"mm";root.style.height=ph+"mm";root.style.overflow="hidden";
   fitFields(root);
   pr.style.cssText="";
 }
+function wrapText(s,n){s=String(s||"").trim();if(!s)return[""];var words=s.split(/\s+/),lines=[],cur="";for(var i=0;i<words.length;i++){var w=words[i];if(!cur)cur=w;else if((cur+" "+w).length<=n)cur+=" "+w;else{lines.push(cur);cur=w;}}if(cur)lines.push(cur);return lines;}
 function fitFields(container){
   var W=container.clientWidth;if(!W)return;
   container.querySelectorAll('.ov-field[data-fitr]').forEach(function(el){
