@@ -552,7 +552,7 @@ function setForm(o){
 }
 /* DB row uses date_issued/time_issued */
 function toRow(o){return {nmis_no:o.nmis_no,nmis_suffix:o.nmis_suffix||null,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,establishment:o.establishment||null,source:o.source||"imported",meat:o.meat||[],owner:o.owner||null,destination:o.destination||null,conveyance:o.conveyance||null,mtv:o.mtv||null,date_issued:o.date||null,time_issued:o.time||null,officer:o.officer||null,received:o.received||null,encoder_name:o.received||null}}
-function fromRow(r){return {id:r.id,nmis_no:r.nmis_no||"",nmis_suffix:r.nmis_suffix||"",license:r.license||"",province:r.province||"",city:r.city||"",est_code:r.est_code||"",establishment:r.establishment||"",source:r.source||"imported",meat:r.meat||[],owner:r.owner||"",destination:r.destination||"",conveyance:r.conveyance||"",mtv:r.mtv||"",date:r.date_issued||"",time:r.time_issued||"",officer:r.officer||"",received:r.received||"",encoder_name:r.encoder_name||"",created_at:r.created_at}}
+function fromRow(r){return {id:r.id,nmis_no:r.nmis_no||"",nmis_suffix:r.nmis_suffix||"",license:r.license||"",province:r.province||"",city:r.city||"",est_code:r.est_code||"",establishment:r.establishment||"",source:r.source||"imported",meat:r.meat||[],owner:r.owner||"",destination:r.destination||"",conveyance:r.conveyance||"",mtv:r.mtv||"",date:r.date_issued||"",time:r.time_issued||"",officer:r.officer||"",received:r.received||"",encoder_name:r.encoder_name||"",created_by:r.created_by||"",created_at:r.created_at}}
 
 function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=isGeneric()?"":encoderName();toast("Cleared. Ready for a new certificate.");showTab("entry")}
 
@@ -560,7 +560,6 @@ function newCertificate(){editingId=null;$("editing-banner").style.display="none
 async function saveRecord(){
   const o=getForm();
   if(!o.nmis_no){toast("⚠️ NMIS No. is required.");$("f-nmis_no").focus();return}
-  if(editingId && !isAdmin()){toast("Encoders can't edit saved records — use Clear Form to start a new one.");return}
   const btn=$("save-btn");btn.disabled=true;const old=btn.textContent;btn.innerHTML='<span class="spinner"></span> Saving…';
   try{
     if(editingId){
@@ -613,7 +612,8 @@ function renderRecords(){
     <td>${esc(r.establishment)}</td><td>${esc(r.owner)}</td><td>${esc(r.destination)}</td>
     <td><div class="rec-actions">
       <button class="btn alt sm" onclick="printRecord('${r.id}')">🖨️ Print</button>
-      ${isAdmin()?`<button class="btn ghost sm" onclick="editRecord('${r.id}')">✏️ Edit</button><button class="btn warn sm" onclick="deleteRecord('${r.id}')">🗑️</button>`:""}
+      ${(isAdmin()||r.created_by===USER_ID)?`<button class="btn ghost sm" onclick="editRecord('${r.id}')">✏️ Edit</button>`:""}
+      ${isAdmin()?`<button class="btn warn sm" onclick="deleteRecord('${r.id}')">🗑️</button>`:""}
     </div></td></tr>`});
   h+="</tbody></table>";$("rec-list").innerHTML=h;
 }
