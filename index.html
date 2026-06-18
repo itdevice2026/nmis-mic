@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:37-->
+<!--APPVER:38-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -389,7 +389,7 @@ let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
-const APP_VERSION="37";
+const APP_VERSION="38";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -752,7 +752,7 @@ function buildPrint(data){
   fitFields(root);
   pr.style.cssText="";
 }
-const KEEP_PHRASES=["Sta. Maria, Bulacan","SJDM Bulacan"];
+const KEEP_PHRASES=["CRYSTAL 2 NAVOTAS CITY","Sta. Maria, Bulacan","SJDM Bulacan"];
 function keepUnits(s){s=String(s||"");KEEP_PHRASES.forEach(function(p){var re=new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");s=s.replace(re,function(m){return m.replace(/ /g," ");});});return s;}
 function wrapText(s,n){s=keepUnits(String(s||"").trim());if(!s)return[""];var words=s.split(/ +/),lines=[],cur="";for(var i=0;i<words.length;i++){var w=words[i];if(!cur)cur=w;else if((cur+" "+w).length<=n)cur+=" "+w;else{lines.push(cur);cur=w;}}if(cur)lines.push(cur);return lines;}
 function keepUnits(s){var SP=String.fromCharCode(32),NB=String.fromCharCode(160);s=String(s||"");KEEP_PHRASES.forEach(function(p){var re=new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");s=s.replace(re,function(m){return m.split(SP).join(NB);});});return s;}
