@@ -376,7 +376,7 @@ let CAL=loadJSON("nmis_calibration",null)||{paper:"A4",offx:0,offy:0,font:11,fon
 let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
-function logActivity(action,detail){try{sb.from("nmis_activity_log").insert({user_id:USER_ID||null,email:USER_EMAIL||null,action:action,detail:detail||null});}catch(e){}}
+async function logActivity(action,detail){try{await sb.from("nmis_activity_log").insert({user_id:USER_ID||null,email:USER_EMAIL||null,action:action,detail:detail||null});}catch(e){}}
 function nameFromEmail(e){if(!e)return"";var l=e.split("@")[0].replace(/[._]+/g," ").trim();return l.replace(/\b\w/g,c=>c.toUpperCase());}
 function encoderName(){return USER_NAME||nameFromEmail(USER_EMAIL);}
 let ESTABS=[];
