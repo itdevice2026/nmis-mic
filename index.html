@@ -613,6 +613,7 @@ async function deleteRecord(id){
   }catch(e){toast("⚠️ Delete failed: "+(e.message||e))}
 }
 function editRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;setForm(r);editingId=id;dirty=false;$("editing-banner").style.display="block";$("editing-id").textContent=r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):"");showTab("entry");window.scrollTo(0,0)}
+function duplicateRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;const c=Object.assign({},r);delete c.id;delete c.created_at;delete c.created_by;c.nmis_no="";c.nmis_suffix="";setForm(c);editingId=null;dirty=true;$("editing-banner").style.display="none";if(isGeneric())$("f-received").value=r.encoder_name||r.received||"";showTab("entry");window.scrollTo(0,0);$("f-nmis_no").focus();toast("📋 Copied. Enter a new NMIS No., then Save.")}
 function printRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;buildPrint(r);logActivity("print","NMIS "+r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):""));window.print()}
 
 function renderRecords(){
@@ -633,6 +634,7 @@ function renderRecords(){
     <td><div class="rec-actions">
       <button class="btn alt sm" onclick="printRecord('${r.id}')">🖨️ Print</button>
       ${(isAdmin()||r.created_by===USER_ID)?`<button class="btn ghost sm" onclick="editRecord('${r.id}')">✏️ Edit</button>`:""}
+      <button class="btn ghost sm" onclick="duplicateRecord('${r.id}')">📋 Duplicate</button>
       ${isAdmin()?`<button class="btn warn sm" onclick="deleteRecord('${r.id}')">🗑️</button>`:""}
     </div></td></tr>`});
   h+="</tbody></table>";$("rec-list").innerHTML=h;
