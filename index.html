@@ -224,6 +224,8 @@
         <option value="nmis_desc">NMIS No. ↓</option>
       </select>
       <span style="flex:1"></span>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px;margin:0"><input type="checkbox" id="rec-auto" onchange="toggleAutoRefresh()" style="width:auto;margin:0"> Auto-refresh</label>
+      <select id="rec-auto-int" onchange="toggleAutoRefresh()" style="width:auto"><option value="15">15s</option><option value="30" selected>30s</option><option value="60">60s</option><option value="120">2m</option></select>
       <button class="btn ghost sm" onclick="refreshRecords()">🔄 Refresh</button>
       <button class="btn ghost sm" onclick="exportData()">⬇️ Backup (JSON)</button>
     </div>
@@ -584,6 +586,14 @@ async function saveRecord(){
   }catch(e){setCloud(false);toast("⚠️ Save failed: "+(e.message||e))}
   btn.disabled=false;btn.textContent=old;
 }
+let autoTimer=null;
+function toggleAutoRefresh(){
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+  var on=$("rec-auto").checked;var sec=parseInt($("rec-auto-int").value,10)||30;
+  try{localStorage.setItem("nmis_auto",on?String(sec):"");}catch(e){}
+  if(on){autoTimer=setInterval(function(){if(USER_ID&&$("view-records").style.display!=="none")refreshRecords(true);},sec*1000);}
+}
+function restoreAutoRefresh(){try{var v=localStorage.getItem("nmis_auto");if(v){$("rec-auto").checked=true;$("rec-auto-int").value=v;toggleAutoRefresh();}}catch(e){}}
 function buildSuggestLists(){
   var map={"owner-list":"owner","conv-list":"conveyance","mtv-list":"mtv","officer-list":"officer"};
   Object.keys(map).forEach(function(listId){
@@ -725,6 +735,7 @@ function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ 
   document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
   setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);loadCalUI();
   var ve=$("view-entry");if(ve)ve.addEventListener("input",function(){dirty=true});
+  restoreAutoRefresh();
   window.addEventListener("resize",()=>{if($("view-calib").style.display!=="none")renderPreviewStage()});
   if(!sb){$("auth-err").textContent="Could not load cloud library. Check your internet connection.";$("auth-err").style.display="block";return}
   const {data}=await sb.auth.getSession();
