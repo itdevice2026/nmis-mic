@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:40-->
+<!--APPVER:41-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -227,8 +227,8 @@
   <div class="panel">
     <h2>Saved Certificates (<span id="rec-count">0</span>)</h2>
     <div class="search-row">
-      <input id="rec-search" placeholder="🔍 Search NMIS no., establishment, owner, destination…" oninput="renderRecords()">
-      <select id="rec-sort" onchange="renderRecords()">
+      <input id="rec-search" placeholder="🔍 Search NMIS no., establishment, owner, destination…" oninput="recPage=1;renderRecords()">
+      <select id="rec-sort" onchange="recPage=1;renderRecords()">
         <option value="date_desc">Newest first</option>
         <option value="date_asc">Oldest first</option>
         <option value="nmis_asc">NMIS No. ↑</option>
@@ -390,7 +390,8 @@ let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
-const APP_VERSION="40";
+let recPage=1;const PAGE_SIZE=10;
+const APP_VERSION="41";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -656,8 +657,10 @@ function renderRecords(){
     const na=parseInt(a.nmis_no)||0,nb=parseInt(b.nmis_no)||0;return sort==="nmis_asc"?na-nb:nb-na;
   });
   if(!list.length){$("rec-list").innerHTML=`<div class="empty">${RECORDS.length?"No records match your search.":"No certificates yet. Fill the form and click “Save to Cloud.”"}</div>`;return}
+  const totalPages=Math.max(1,Math.ceil(list.length/PAGE_SIZE));if(recPage>totalPages)recPage=totalPages;if(recPage<1)recPage=1;
+  const start=(recPage-1)*PAGE_SIZE,pageItems=list.slice(start,start+PAGE_SIZE);
   let h=`<table class="rec-table"><thead><tr><th>NMIS No.</th><th>Date</th><th>Establishment</th><th>Owner / Dealer</th><th>Destination</th><th>Encoded by</th><th>Timestamp</th><th style="width:200px">Actions</th></tr></thead><tbody>`;
-  list.forEach(r=>{h+=`<tr>
+  pageItems.forEach(r=>{h+=`<tr>
     <td><b>${esc(r.nmis_no)}${r.nmis_suffix?("-"+esc(r.nmis_suffix)):""}</b></td>
     <td>${esc(fmtDate(r.date))}<br><span class="pill">${esc((r.source||"").toUpperCase())}</span></td>
     <td>${esc(r.establishment)}</td><td>${esc(r.owner)}</td><td>${esc(r.destination)}</td><td>${esc(r.encoder_name||r.received||"")}</td><td>${r.created_at?esc(fmtDateTime(r.created_at)):""}</td>
@@ -667,8 +670,11 @@ function renderRecords(){
       <button class="btn ghost sm" onclick="duplicateRecord('${r.id}')">📋 Duplicate</button>
       ${isAdmin()?`<button class="btn warn sm" onclick="deleteRecord('${r.id}')">🗑️</button>`:""}
     </div></td></tr>`});
-  h+="</tbody></table>";$("rec-list").innerHTML=h;
+  h+="</tbody></table>";
+  h+=`<div class="search-row" style="margin-top:10px;align-items:center"><button class="btn ghost sm" onclick="gotoPage(${recPage-1})" ${recPage<=1?"disabled":""}>◀ Prev</button><span style="align-self:center;color:#475569">Page ${recPage} of ${totalPages} — ${list.length} record(s)</span><button class="btn ghost sm" onclick="gotoPage(${recPage+1})" ${recPage>=totalPages?"disabled":""}>Next ▶</button></div>`;
+  $("rec-list").innerHTML=h;
 }
+function gotoPage(p){recPage=p;renderRecords();var rl=$("rec-list");if(rl)rl.scrollIntoView({behavior:"smooth",block:"start"});}
 function exportData(){
   const blob=new Blob([JSON.stringify({version:2,exported:new Date().toISOString(),records:RECORDS},null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="NMIS-MIC-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();toast("Backup downloaded.");
