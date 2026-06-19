@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:39-->
+<!--APPVER:40-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -163,6 +163,7 @@
 <section id="view-entry">
   <div class="panel">
     <h2>Certificate Details</h2>
+    <div class="search-row" style="margin-bottom:10px"><button class="btn ghost sm" onclick="navRecord(-1)">◀ Previous</button><button class="btn ghost sm" onclick="navRecord(1)">Next ▶</button><span id="nav-pos" style="align-self:center;color:#64748b;font-size:13px"></span></div>
     <div id="editing-banner" class="note" style="display:none">✏️ Editing saved record <b id="editing-id"></b>. Saving will update it in the cloud.</div>
     <div class="grid g3">
       <label class="fld">NMIS No. <span class="req">*</span><input id="f-nmis_no" placeholder="e.g. 27751596" inputmode="numeric"></label>
@@ -389,7 +390,7 @@ let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
-const APP_VERSION="39";
+const APP_VERSION="40";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -579,7 +580,7 @@ function setForm(o){
 function toRow(o){return {nmis_no:o.nmis_no,nmis_suffix:o.nmis_suffix||null,license:o.license||null,province:o.province||null,city:o.city||null,est_code:o.est_code||null,establishment:o.establishment||null,source:o.source||"imported",meat:o.meat||[],owner:o.owner||null,destination:o.destination||null,conveyance:o.conveyance||null,mtv:o.mtv||null,date_issued:o.date||null,time_issued:o.time||null,officer:o.officer||null,received:o.received||null,encoder_name:o.received||null}}
 function fromRow(r){return {id:r.id,nmis_no:r.nmis_no||"",nmis_suffix:r.nmis_suffix||"",license:r.license||"",province:r.province||"",city:r.city||"",est_code:r.est_code||"",establishment:r.establishment||"",source:r.source||"imported",meat:r.meat||[],owner:r.owner||"",destination:r.destination||"",conveyance:r.conveyance||"",mtv:r.mtv||"",date:r.date_issued||"",time:r.time_issued||"",officer:r.officer||"",received:r.received||"",encoder_name:r.encoder_name||"",created_by:r.created_by||"",created_at:r.created_at}}
 
-function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=isGeneric()?"":encoderName();dirty=false;toast("Cleared. Ready for a new certificate.");showTab("entry")}
+function newCertificate(){editingId=null;$("editing-banner").style.display="none";setForm({source:"imported"});setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);$("f-received").value=isGeneric()?"":encoderName();dirty=false;updateNavPos();toast("Cleared. Ready for a new certificate.");showTab("entry")}
 
 /* ============ Cloud CRUD ============ */
 async function saveRecord(){
@@ -626,7 +627,7 @@ async function refreshRecords(silent){
   try{
     const {data,error}=await sb.from(TABLE).select("*").order("created_at",{ascending:false});
     if(error)throw error;
-    RECORDS=(data||[]).map(fromRow);setCloud(true);buildSuggestLists();
+    RECORDS=(data||[]).map(fromRow);setCloud(true);buildSuggestLists();updateNavPos();
     if($("view-records").style.display!=="none")renderRecords();
     if(!silent && $("view-records").style.display!=="none")toast("Records refreshed.");
   }catch(e){setCloud(false);$("rec-list").innerHTML=`<div class="empty">⚠️ Could not load records: ${esc(e.message||e)}</div>`}
@@ -639,7 +640,9 @@ async function deleteRecord(id){
     if(editingId===id)newCertificate();await refreshRecords(true);renderRecords();toast("Record deleted.");
   }catch(e){toast("⚠️ Delete failed: "+(e.message||e))}
 }
-function editRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;setForm(r);editingId=id;dirty=false;$("editing-banner").style.display="block";$("editing-id").textContent=r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):"");showTab("entry");window.scrollTo(0,0)}
+function editRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;setForm(r);editingId=id;dirty=false;$("editing-banner").style.display="block";$("editing-id").textContent=r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):"");updateNavPos();showTab("entry");window.scrollTo(0,0)}
+function updateNavPos(){var el=$("nav-pos");if(!el)return;if(editingId){var i=RECORDS.findIndex(r=>r.id===editingId);el.textContent=i>=0?("Record "+(i+1)+" of "+RECORDS.length):"";}else el.textContent=RECORDS.length?("New — "+RECORDS.length+" saved"):"";}
+function navRecord(dir){if(!RECORDS.length){toast("No saved records yet.");return;}if(dirty&&!confirm("Discard unsaved changes and move to another record?"))return;var idx=editingId?RECORDS.findIndex(r=>r.id===editingId):-1;var ni=idx<0?0:idx+dir;if(ni<0){toast("Already at the newest record.");return;}if(ni>=RECORDS.length){toast("Already at the oldest record.");return;}editRecord(RECORDS[ni].id);}
 function duplicateRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;const c=Object.assign({},r);delete c.id;delete c.created_at;delete c.created_by;c.nmis_no="";c.nmis_suffix="";setForm(c);editingId=null;dirty=true;$("editing-banner").style.display="none";if(isGeneric())$("f-received").value=r.encoder_name||r.received||"";showTab("entry");window.scrollTo(0,0);$("f-nmis_no").focus();toast("📋 Copied. Enter a new NMIS No., then Save.")}
 function printRecord(id){const r=RECORDS.find(x=>x.id===id);if(!r)return;buildPrint(r);logActivity("print","NMIS "+r.nmis_no+(r.nmis_suffix?("-"+r.nmis_suffix):""));window.print()}
 
