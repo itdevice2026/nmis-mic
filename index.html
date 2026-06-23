@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:51-->
+<!--APPVER:52-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -534,7 +534,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="51";
+const APP_VERSION="52";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -925,6 +925,7 @@ function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ 
 function cShow(sub){cSub=sub;["entry","records","align"].forEach(function(s){var v=$("cmi-"+s);if(v)v.style.display=s===sub?"block":"none";var b=$("cmi-tab-"+s);if(b)b.classList.toggle("on",s===sub);});if(sub==="entry"&&!cEditingId&&$("c-received")&&!$("c-received").value&&!isGeneric())$("c-received").value=encoderName();if(sub==="records")cRender();if(sub==="align"){cLoadCalUI();cApplyLock();cRenderPreview();}}
 var CPATTR=["hdr","desc","evq","vol","prod","exp","fme"];
 function cGetForm(){var o={};CFIELDS.forEach(function(f){o[f]=($("c-"+f).value||"").trim();});
+  if(!o.received&&!isGeneric())o.received=encoderName();
   o.products=[0,1,2].map(function(i){var p={};CPATTR.forEach(function(a){var el=$("c-p"+i+"-"+a);p[a]=el?(el.value||"").trim():"";});return p;});return o;}
 function cSetForm(o){o=o||{};CFIELDS.forEach(function(f){$("c-"+f).value=o[f]||"";});var prods=o.products||[];
   [0,1,2].forEach(function(i){var p=prods[i]||{};CPATTR.forEach(function(a){var el=$("c-p"+i+"-"+a);if(el)el.value=p[a]||"";});});}
