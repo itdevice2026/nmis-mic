@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:52-->
+<!--APPVER:53-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -270,6 +270,11 @@
             <option value="Sans">Sans-serif (Arial)</option>
             <option value="Serif">Serif (Times)</option>
           </select></div>
+        <div class="ctl"><label>Text weight</label>
+          <select id="cal-weight" onchange="applyCalibration()">
+            <option value="bold">Bold</option>
+            <option value="normal">Normal</option>
+          </select></div>
         <div class="ctl" id="cal-refimg"><label>Reference image (optional, on-screen only)</label>
           <input type="file" accept="image/*" onchange="loadBackground(event)">
           <button class="btn ghost sm" style="margin-top:6px" onclick="clearBackground()">Remove image</button></div>
@@ -379,6 +384,7 @@
           <div class="ctl"><label>Vertical offset: <span class="range-val" id="cv-offy">0</span> mm</label><input type="range" id="cc-offy" min="-20" max="20" step="0.5" value="0" oninput="cApplyCal()"></div>
           <div class="ctl"><label>Text size: <span class="range-val" id="cv-font">10</span> pt</label><input type="range" id="cc-font" min="6" max="16" step="0.5" value="10" oninput="cApplyCal()"></div>
           <div class="ctl"><label>Font style</label><select id="cc-fontfam" onchange="cApplyCal()"><option value="Mono">Monospace (Courier)</option><option value="Sans">Sans-serif (Arial)</option><option value="Serif">Serif (Times)</option></select></div>
+          <div class="ctl"><label>Text weight</label><select id="cc-weight" onchange="cApplyCal()"><option value="bold">Bold</option><option value="normal">Normal</option></select></div>
           <div class="ctl" id="cc-refimg"><label>Reference image (optional, on-screen only)</label><input type="file" accept="image/*" onchange="cLoadBg(event)"><button class="btn ghost sm" style="margin-top:6px" onclick="cClearBg()">Remove image</button></div>
           <div class="ctl" id="cc-helpers"><label>Helpers</label><div class="seg" style="margin-top:8px"><button id="cc-edit-off" class="on" onclick="cToggleEdit(false)">Lock fields</button><button id="cc-edit-on" onclick="cToggleEdit(true)">Drag to adjust</button></div><p class="legend">Turn on “Drag to adjust” then drag any field on the preview to fine-tune. Saved automatically.</p></div>
           <div class="ctl"><button class="btn alt sm" onclick="cPrint()">🖨️ Test print</button><button class="btn warn sm" id="cc-reset" onclick="cReset()">↺ Reset field map</button></div>
@@ -534,7 +540,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="52";
+const APP_VERSION="53";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -852,7 +858,7 @@ function pxToPct(mm,dim){return (mm/dim)*100}
 
 /* ============ Preview ============ */
 function renderPreview(){loadCalUI();applyAlignmentLock();renderPreviewStage()}
-function loadCalUI(){$("cal-paper").value=CAL.paper;$("cal-offx").value=CAL.offx;$("cal-offy").value=CAL.offy;$("cal-font").value=CAL.font;$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;if($("cal-fontfam"))$("cal-fontfam").value=CAL.fontFamily||"Mono"}
+function loadCalUI(){$("cal-paper").value=CAL.paper;$("cal-offx").value=CAL.offx;$("cal-offy").value=CAL.offy;$("cal-font").value=CAL.font;$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;if($("cal-fontfam"))$("cal-fontfam").value=CAL.fontFamily||"Mono";if($("cal-weight"))$("cal-weight").value=(CAL.bold===false?"normal":"bold")}
 function renderPreviewStage(){
   const data=getForm();const [pw,ph]=PAPER[CAL.paper];const stage=$("page-preview");
   const W=Math.min(680,(stage.parentElement.clientWidth-32));const scale=W/pw;
@@ -865,7 +871,7 @@ function renderPreviewStage(){
     let cls=n.align==='center'?'center':'',extra='',fitAttr='',content=esc(n.text);
     if(n.wrapUp){extra='white-space:normal;transform:translate(-2px,-100%);line-height:1.15;';content=wrapText(n.text,16).map(esc).join('<br>');}
     else if(n.fitR){fitAttr=` data-x="${leftN}" data-fitr="${n.fitR}"`;}
-    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" data-mcol="${n.mcol||''}" data-mrow="${n.mrow==null?'':n.mrow}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${extra}${n.bold?'font-weight:700':''}">${content}</div>`;
+    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" data-mcol="${n.mcol||''}" data-mrow="${n.mrow==null?'':n.mrow}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${extra}font-weight:${(n.bold||CAL.bold!==false)?700:400}">${content}</div>`;
   });
   stage.innerHTML=html;fitFields(stage);if(editMode)attachDrag(pw,ph);
 }
@@ -884,7 +890,7 @@ function attachDrag(pw,ph){
       document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);};
   });
 }
-function applyCalibration(){CAL.paper=$("cal-paper").value;CAL.fontFamily=$("cal-fontfam").value;CAL.offx=parseFloat($("cal-offx").value);CAL.offy=parseFloat($("cal-offy").value);CAL.font=parseFloat($("cal-font").value);$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;saveJSON("nmis_calibration",CAL);saveSettings();renderPreviewStage()}
+function applyCalibration(){CAL.paper=$("cal-paper").value;CAL.fontFamily=$("cal-fontfam").value;if($("cal-weight"))CAL.bold=$("cal-weight").value!=="normal";CAL.offx=parseFloat($("cal-offx").value);CAL.offy=parseFloat($("cal-offy").value);CAL.font=parseFloat($("cal-font").value);$("v-offx").textContent=CAL.offx;$("v-offy").textContent=CAL.offy;$("v-font").textContent=CAL.font;saveJSON("nmis_calibration",CAL);saveSettings();renderPreviewStage()}
 function toggleGrid(on){gridOn=on;$("grid-on").classList.toggle("on",on);$("grid-off").classList.toggle("on",!on);renderPreviewStage()}
 function toggleEdit(on){editMode=on;$("edit-on").classList.toggle("on",on);$("edit-off").classList.toggle("on",!on);renderPreviewStage()}
 function resetPositions(){if(!confirm("Reset all field positions to defaults?"))return;MAP=deepClone(DEFAULT_MAP);TBL=deepClone(DEFAULT_TABLE);saveJSON("nmis_fieldmap",MAP);saveJSON("nmis_table",TBL);saveSettings();renderPreviewStage();toast("Field map reset.")}
@@ -901,7 +907,7 @@ function buildPrint(data){
     let cls=n.align==='center'?'center':'',extra='',fitAttr='',content=esc(n.text);
     if(n.wrapUp){extra='white-space:normal;transform:translate(-2px,-100%);line-height:1.15;';content=wrapText(n.text,16).map(esc).join('<br>');}
     else if(n.fitR){fitAttr=` data-x="${leftN}" data-fitr="${n.fitR}"`;}
-    html+=`<div class="ov-field ${cls}"${fitAttr} style="left:${left};top:${top};font-size:${fs};font-family:${ff};${extra}${n.bold?'font-weight:700':''}">${content}</div>`});
+    html+=`<div class="ov-field ${cls}"${fitAttr} style="left:${left};top:${top};font-size:${fs};font-family:${ff};${extra}font-weight:${(n.bold||CAL.bold!==false)?700:400}">${content}</div>`});
   root.innerHTML=html;
   const pr=$("print-root");pr.style.cssText="display:block;position:absolute;left:-10000px;top:0";root.style.width=pw+"mm";root.style.height=ph+"mm";root.style.overflow="hidden";
   fitFields(root);
@@ -976,7 +982,7 @@ function cBuildPrint(data){const [pw,ph]=PAPER[CCAL.paper]||PAPER.COMI;const roo
   root.style.setProperty("--pw",pw+"mm");root.style.setProperty("--ph",ph+"mm");document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
   let html="";const ff=(FONTS[CCAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
   cFieldNodes(data).forEach(n=>{const leftN=(n.x+pxToPct(CCAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CCAL.offy,ph))+"%";const fs=((n.size/10)*CCAL.font)+"pt";var cls=n.align==='center'?'center':'',fitAttr=n.fitR?` data-x="${leftN}" data-fitr="${n.fitR}"`:"";
-    html+=`<div class="ov-field ${cls}"${fitAttr} style="left:${left};top:${top};font-size:${fs};font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`});
+    html+=`<div class="ov-field ${cls}"${fitAttr} style="left:${left};top:${top};font-size:${fs};font-family:${ff};font-weight:${(n.bold||CCAL.bold!==false)?700:400}">${esc(n.text)}</div>`});
   root.innerHTML=html;const pr=$("print-root");pr.style.cssText="display:block;position:absolute;left:-10000px;top:0";root.style.width=pw+"mm";root.style.height=ph+"mm";root.style.overflow="hidden";fitFields(root);pr.style.cssText="";}
 function cPrint(){const o=cGetForm();if(!o.control_no){toast("⚠️ Enter at least the Control No. before printing.");return}cBuildPrint(o);logActivity("print","COMI "+o.control_no);window.print();}
 function cPrintSaved(){const o=cGetForm();if(!o.control_no){toast("⚠️ Enter at least the Control No. before printing.");return}if(!cEditingId){toast("⚠️ Save the COMI first, then print.");return}if(cDirty){toast("⚠️ You have unsaved changes — save first, then print.");return}cBuildPrint(o);logActivity("print","COMI "+o.control_no);window.print();}
@@ -986,19 +992,19 @@ function cRenderPreview(){const data=cGetForm();const [pw,ph]=PAPER[CCAL.paper]|
   stage.style.backgroundImage=CBG?`url(${CBG})`:"none";stage.classList.toggle("editing",cEditMode);
   let html="";const ff=(FONTS[CCAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
   cFieldNodes(data).forEach(n=>{const leftN=(n.x+pxToPct(CCAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CCAL.offy,ph))+"%";const fs=((n.size/10)*CCAL.font)*scale*(25.4/72);var cls=n.align==='center'?'center':'',fitAttr=(n.fitR&&!cEditMode)?` data-x="${leftN}" data-fitr="${n.fitR}"`:"";
-    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" data-col="${n.col==null?'':n.col}" data-prow="${n.prow||''}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;});
+    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" data-col="${n.col==null?'':n.col}" data-prow="${n.prow||''}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};font-weight:${(n.bold||CCAL.bold!==false)?700:400}">${esc(n.text)}</div>`;});
   stage.innerHTML=html;fitFields(stage);if(cEditMode)cAttachDrag(pw,ph);}
 function cAttachDrag(pw,ph){const stage=$("cmi-preview");stage.querySelectorAll(".ov-field").forEach(el=>{el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;const col=el.dataset.col,prow=el.dataset.prow;const rect=stage.getBoundingClientRect();
   function move(ev){let x=((ev.clientX-rect.left)/rect.width)*100,y=((ev.clientY-rect.top)/rect.height)*100;x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));var ax=+(x-pxToPct(CCAL.offx,pw)).toFixed(2),ay=+(y-pxToPct(CCAL.offy,ph)).toFixed(2);
     if(key==="prod"){CTBL.colX[+col]=ax;CTBL.rowY[prow]=ay;}else{CMAP[key].x=ax;CMAP[key].y=ay;}cRenderPreview();}
   function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_comi_fieldmap",CMAP);saveJSON("nmis_comi_tbl",CTBL);cSaveSettings();toast("Position saved.");}
   document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);};});}
-function cApplyCal(){CCAL.paper=$("cc-paper").value;CCAL.fontFamily=$("cc-fontfam").value;CCAL.offx=parseFloat($("cc-offx").value);CCAL.offy=parseFloat($("cc-offy").value);CCAL.font=parseFloat($("cc-font").value);$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;saveJSON("nmis_comi_cal",CCAL);cSaveSettings();cRenderPreview();}
+function cApplyCal(){CCAL.paper=$("cc-paper").value;CCAL.fontFamily=$("cc-fontfam").value;if($("cc-weight"))CCAL.bold=$("cc-weight").value!=="normal";CCAL.offx=parseFloat($("cc-offx").value);CCAL.offy=parseFloat($("cc-offy").value);CCAL.font=parseFloat($("cc-font").value);$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;saveJSON("nmis_comi_cal",CCAL);cSaveSettings();cRenderPreview();}
 function cToggleEdit(on){cEditMode=on;$("cc-edit-on").classList.toggle("on",on);$("cc-edit-off").classList.toggle("on",!on);cRenderPreview();}
 function cLoadBg(ev){const f=ev.target.files[0];if(!f)return;fileToBg(f,function(url){CBG=url;try{localStorage.setItem("nmis_comi_bg",CBG)}catch(e){toast("Image too large to save; shown this session only.")}cRenderPreview()});}
 function cClearBg(){CBG="";localStorage.removeItem("nmis_comi_bg");cRenderPreview();}
 function cReset(){if(!confirm("Reset COMI field positions to defaults?"))return;CMAP=deepClone(DEFAULT_CMAP);CTBL=deepClone(DEFAULT_CTBL);saveJSON("nmis_comi_fieldmap",CMAP);saveJSON("nmis_comi_tbl",CTBL);cSaveSettings();cRenderPreview();toast("COMI field map reset.");}
-function cLoadCalUI(){$("cc-paper").value=CCAL.paper;$("cc-offx").value=CCAL.offx;$("cc-offy").value=CCAL.offy;$("cc-font").value=CCAL.font;$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;if($("cc-fontfam"))$("cc-fontfam").value=CCAL.fontFamily||"Mono";}
+function cLoadCalUI(){$("cc-paper").value=CCAL.paper;$("cc-offx").value=CCAL.offx;$("cc-offy").value=CCAL.offy;$("cc-font").value=CCAL.font;$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;if($("cc-fontfam"))$("cc-fontfam").value=CCAL.fontFamily||"Mono";if($("cc-weight"))$("cc-weight").value=(CCAL.bold===false?"normal":"bold");}
 function cApplyLock(){var ro=!isAdmin();["cc-paper","cc-offx","cc-offy","cc-font","cc-fontfam"].forEach(id=>{var el=$(id);if(el)el.disabled=ro;});["cc-refimg","cc-helpers","cc-reset"].forEach(id=>{var el=$(id);if(el)el.style.display=ro?"none":"";});var n=$("cmi-align-note");if(n)n.style.display=ro?"block":"none";if(ro)cEditMode=false;}
 
 /* ============ Init ============ */
