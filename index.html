@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:44-->
+<!--APPVER:45-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -305,12 +305,12 @@
         <label class="fld">Control No. <span class="req">*</span><input id="c-control_no" placeholder="pre-printed no. (kept, not printed)"></label>
         <label class="fld">Importer (DA-NMIS Licensed)<input id="c-importer" list="cl-importer" placeholder="Name of importer"><datalist id="cl-importer"></datalist></label>
         <label class="fld">Country of Origin<input id="c-country_origin" list="cl-country" placeholder="e.g. Brazil"><datalist id="cl-country"></datalist></label>
-        <label class="fld" style="grid-column:1 / -1">Meat Description<input id="c-meat_desc" list="cl-meat" placeholder="e.g. Frozen Pork Cuts"><datalist id="cl-meat"></datalist></label>
+        <label class="fld">Meat Description<input id="c-meat_desc" list="cl-meat" placeholder="e.g. Frozen Pork Cuts"><datalist id="cl-meat"></datalist></label>
         <label class="fld">eVQMIIC No.<input id="c-evqmiic"></label>
         <label class="fld">Volume (kg)<input id="c-volume"></label>
         <label class="fld">Production Date<input id="c-production_date" placeholder="e.g. Jun 1, 2026"></label>
         <label class="fld">Expiry / Best Before Date<input id="c-expiry_date" placeholder="e.g. Jun 1, 2027"></label>
-        <label class="fld" style="grid-column:1 / -1">FME Name and No.<input id="c-fme" list="cl-fme" placeholder="Foreign Meat Establishment name & no."><datalist id="cl-fme"></datalist></label>
+        <label class="fld">FME Name and No.<input id="c-fme" list="cl-fme" placeholder="Foreign Meat Establishment name & no."><datalist id="cl-fme"></datalist></label>
       </div>
       <h2 style="margin-top:16px">Withdrawal Details</h2>
       <div class="grid g2">
@@ -527,7 +527,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="44";
+const APP_VERSION="45";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
