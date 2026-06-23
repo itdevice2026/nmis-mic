@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:42-->
+<!--APPVER:43-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -442,7 +442,23 @@
 <div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
+try{if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";}catch(e){}
+/* Convert an uploaded image OR pdf into an image data URL usable as a preview background */
+function fileToBg(file,cb){
+  if(file.type==="application/pdf"||/\.pdf$/i.test(file.name)){
+    if(!window.pdfjsLib){toast("PDF support still loading — try again in a moment.");return;}
+    var rd=new FileReader();rd.onload=function(){
+      pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise
+        .then(function(pdf){return pdf.getPage(1);})
+        .then(function(page){var vp=page.getViewport({scale:2});var cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;return page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise.then(function(){cb(cv.toDataURL("image/jpeg",0.85));});})
+        .catch(function(e){toast("Could not read PDF: "+(e.message||e));});
+    };rd.readAsArrayBuffer(file);
+  } else {
+    var rd=new FileReader();rd.onload=function(){cb(rd.result);};rd.readAsDataURL(file);
+  }
+}
 /* ============ CONFIG ============ */
 const SUPABASE_URL = "https://emkcwukiqxnvcbhkjiqz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u_qnmEI8oHI9Z_A0-Hht3Q_Yvaa7Ork";
@@ -511,7 +527,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="42";
+const APP_VERSION="43";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -864,7 +880,7 @@ function applyCalibration(){CAL.paper=$("cal-paper").value;CAL.fontFamily=$("cal
 function toggleGrid(on){gridOn=on;$("grid-on").classList.toggle("on",on);$("grid-off").classList.toggle("on",!on);renderPreviewStage()}
 function toggleEdit(on){editMode=on;$("edit-on").classList.toggle("on",on);$("edit-off").classList.toggle("on",!on);renderPreviewStage()}
 function resetPositions(){if(!confirm("Reset all field positions to defaults?"))return;MAP=deepClone(DEFAULT_MAP);TBL=deepClone(DEFAULT_TABLE);saveJSON("nmis_fieldmap",MAP);saveJSON("nmis_table",TBL);saveSettings();renderPreviewStage();toast("Field map reset.")}
-function loadBackground(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{BG=rd.result;try{localStorage.setItem("nmis_bg",BG)}catch(e){toast("Image too large to save; shown this session only.")}renderPreviewStage()};rd.readAsDataURL(f)}
+function loadBackground(ev){const f=ev.target.files[0];if(!f)return;fileToBg(f,function(url){BG=url;try{localStorage.setItem("nmis_bg",BG)}catch(e){toast("Image too large to save; shown this session only.")}renderPreviewStage()})}
 function clearBackground(){BG="";localStorage.removeItem("nmis_bg");renderPreviewStage()}
 
 /* ============ Print ============ */
@@ -959,7 +975,7 @@ function cAttachDrag(pw,ph){const stage=$("cmi-preview");stage.querySelectorAll(
   document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);};});}
 function cApplyCal(){CCAL.paper=$("cc-paper").value;CCAL.fontFamily=$("cc-fontfam").value;CCAL.offx=parseFloat($("cc-offx").value);CCAL.offy=parseFloat($("cc-offy").value);CCAL.font=parseFloat($("cc-font").value);$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;saveJSON("nmis_comi_cal",CCAL);cSaveSettings();cRenderPreview();}
 function cToggleEdit(on){cEditMode=on;$("cc-edit-on").classList.toggle("on",on);$("cc-edit-off").classList.toggle("on",!on);cRenderPreview();}
-function cLoadBg(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{CBG=rd.result;try{localStorage.setItem("nmis_comi_bg",CBG)}catch(e){toast("Image too large to save; shown this session only.")}cRenderPreview()};rd.readAsDataURL(f);}
+function cLoadBg(ev){const f=ev.target.files[0];if(!f)return;fileToBg(f,function(url){CBG=url;try{localStorage.setItem("nmis_comi_bg",CBG)}catch(e){toast("Image too large to save; shown this session only.")}cRenderPreview()});}
 function cClearBg(){CBG="";localStorage.removeItem("nmis_comi_bg");cRenderPreview();}
 function cReset(){if(!confirm("Reset COMI field positions to defaults?"))return;CMAP=deepClone(DEFAULT_CMAP);saveJSON("nmis_comi_fieldmap",CMAP);cSaveSettings();cRenderPreview();toast("COMI field map reset.");}
 function cLoadCalUI(){$("cc-paper").value=CCAL.paper;$("cc-offx").value=CCAL.offx;$("cc-offy").value=CCAL.offy;$("cc-font").value=CCAL.font;$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;if($("cc-fontfam"))$("cc-fontfam").value=CCAL.fontFamily||"Mono";}
