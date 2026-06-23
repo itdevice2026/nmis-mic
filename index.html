@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:43-->
+<!--APPVER:44-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -63,12 +63,12 @@
   .cal-controls .ctl label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
   .range-val{font-weight:700;color:var(--brand-d)}
   .preview-stage{background:#475569;border-radius:10px;padding:16px;overflow:auto}
-  #page-preview{position:relative;background:#fff;margin:0 auto;box-shadow:0 6px 24px rgba(0,0,0,.35);background-size:100% 100%;background-repeat:no-repeat}
+  #page-preview,#cmi-preview{position:relative;background:#fff;margin:0 auto;box-shadow:0 6px 24px rgba(0,0,0,.35);background-size:100% 100%;background-repeat:no-repeat}
   .ov-field{position:absolute;font-family:"Courier New",monospace;color:#003a8c;font-weight:600;white-space:nowrap;transform:translate(-2px,-50%);line-height:1}
   .ov-field.center{transform:translate(-50%,-50%)}
   .ov-field.up{transform:translate(-2px,-100%);white-space:normal;line-height:1.15}
-  #page-preview.editing .ov-field{cursor:move;background:rgba(29,78,216,.12);outline:1px dashed #1d4ed8;padding:0 2px;min-width:14px;min-height:12px}
-  #page-preview.editing .ov-field:hover{background:rgba(29,78,216,.28)}
+  #page-preview.editing .ov-field,#cmi-preview.editing .ov-field{cursor:move;background:rgba(29,78,216,.12);outline:1px dashed #1d4ed8;padding:0 2px;min-width:14px;min-height:12px}
+  #page-preview.editing .ov-field:hover,#cmi-preview.editing .ov-field:hover{background:rgba(29,78,216,.28)}
   .grid-overlay{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,0,0,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.10) 1px,transparent 1px);background-size:5% 5%}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 20px;border-radius:8px;font-size:13.5px;opacity:0;transition:opacity .25s;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3)}
   .toast.show{opacity:1}
@@ -527,7 +527,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="43";
+const APP_VERSION="44";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
