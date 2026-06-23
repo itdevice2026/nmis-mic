@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:49-->
+<!--APPVER:50-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -534,7 +534,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="49";
+const APP_VERSION="50";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -611,6 +611,7 @@ async function onSignedIn(session){
   setCloud(true);
   try{const {data}=await sb.from("nmis_user_roles").select("role,full_name").eq("user_id",session.user.id).maybeSingle();ROLE=(data&&data.role)||"encoder";USER_NAME=(data&&data.full_name)||"";}catch(e){ROLE="encoder";}
   if(!$("f-received").value)$("f-received").value=isGeneric()?"":encoderName();
+  if($("c-received")&&!$("c-received").value)$("c-received").value=isGeneric()?"":encoderName();
   applyRole();
   await loadSettings();
   await cLoadSettings();
