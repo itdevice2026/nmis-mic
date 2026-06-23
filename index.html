@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:47-->
+<!--APPVER:48-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -502,7 +502,7 @@ const DEFAULT_TABLE = {colTypeL:11.0,colQtyL:26.5,colTypeR:54.0,colQtyR:70.0,sta
 /* ====== COMI field map (positions in % of the pre-printed COMI form) ====== */
 const DEFAULT_CMAP = {
   importer:{x:53.0,y:27.5,size:10,align:"left",fitR:86},
-  country_origin:{x:5.0,y:31.0,size:10,align:"left",fitR:27},
+  country_origin:{x:4.0,y:32.6,size:10,align:"left",fitR:34},
   buyer:{x:28.0,y:54.2,size:9.5,align:"left",fitR:92},
   place_dest:{x:28.0,y:56.3,size:9.5,align:"left",fitR:92},
   withdrawal_date:{x:28.0,y:58.4,size:9.5,align:"left",fitR:92},
@@ -534,7 +534,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="47";
+const APP_VERSION="48";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
