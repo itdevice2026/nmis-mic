@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:41-->
+<!--APPVER:42-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -153,6 +153,7 @@
   <button id="tab-entry" class="active" onclick="showTab('entry')">📝 New / Edit Certificate</button>
   <button id="tab-records" onclick="showTab('records')">🗂️ Records</button>
   <button id="tab-calib" onclick="showTab('calib')">🎯 Print Alignment</button>
+  <button id="tab-comi" onclick="showTab('comi')">📄 COMI</button>
   <button id="tab-dash" onclick="showTab('dash')" style="display:none">📊 Dashboard</button>
   <button id="tab-users" onclick="showTab('users')" style="display:none">👥 Users &amp; Roles</button>
   <button id="tab-help" onclick="showTab('help')">❓ Help</button>
@@ -288,6 +289,97 @@
   </div>
 </section>
 
+<section id="view-comi" style="display:none">
+  <div class="seg" style="margin-bottom:14px">
+    <button id="cmi-tab-entry" class="on" onclick="cShow('entry')">📝 Entry</button>
+    <button id="cmi-tab-records" onclick="cShow('records')">🗂️ COMI Records</button>
+    <button id="cmi-tab-align" onclick="cShow('align')">🎯 Alignment</button>
+  </div>
+
+  <div id="cmi-entry">
+    <div class="panel">
+      <h2>COMI — Certificate of Meat Inspection (Imported Meat)</h2>
+      <div class="search-row" style="margin-bottom:10px"><button class="btn ghost sm" onclick="cNav(-1)">◀ Previous</button><button class="btn ghost sm" onclick="cNav(1)">Next ▶</button><span id="cmi-navpos" style="align-self:center;color:#64748b;font-size:13px"></span></div>
+      <div id="cmi-editbanner" class="note" style="display:none">✏️ Editing saved COMI <b id="cmi-editid"></b>. Saving will update it.</div>
+      <div class="grid g2">
+        <label class="fld">Control No. <span class="req">*</span><input id="c-control_no" placeholder="pre-printed no. (kept, not printed)"></label>
+        <label class="fld">Importer (DA-NMIS Licensed)<input id="c-importer" list="cl-importer" placeholder="Name of importer"><datalist id="cl-importer"></datalist></label>
+        <label class="fld">Country of Origin<input id="c-country_origin" list="cl-country" placeholder="e.g. Brazil"><datalist id="cl-country"></datalist></label>
+        <label class="fld" style="grid-column:1 / -1">Meat Description<input id="c-meat_desc" list="cl-meat" placeholder="e.g. Frozen Pork Cuts"><datalist id="cl-meat"></datalist></label>
+        <label class="fld">eVQMIIC No.<input id="c-evqmiic"></label>
+        <label class="fld">Volume (kg)<input id="c-volume"></label>
+        <label class="fld">Production Date<input id="c-production_date" placeholder="e.g. Jun 1, 2026"></label>
+        <label class="fld">Expiry / Best Before Date<input id="c-expiry_date" placeholder="e.g. Jun 1, 2027"></label>
+        <label class="fld" style="grid-column:1 / -1">FME Name and No.<input id="c-fme" list="cl-fme" placeholder="Foreign Meat Establishment name & no."><datalist id="cl-fme"></datalist></label>
+      </div>
+      <h2 style="margin-top:16px">Withdrawal Details</h2>
+      <div class="grid g2">
+        <label class="fld">Buyer / End-User<input id="c-buyer" list="cl-buyer" placeholder="Type or pick"><datalist id="cl-buyer"></datalist></label>
+        <label class="fld">Place of Destination<input id="c-place_dest" list="cl-dest" placeholder="Type or pick"><datalist id="cl-dest"></datalist></label>
+        <label class="fld">Date of Withdrawal<input id="c-withdrawal_date" placeholder="e.g. Jun 19, 2026"></label>
+        <label class="fld">NMIS MTV Reg. No.<input id="c-mtv" list="cl-cmtv" placeholder="e.g. NCR-0410"><datalist id="cl-cmtv"></datalist></label>
+      </div>
+      <h2 style="margin-top:16px">Inspection</h2>
+      <div class="grid g3">
+        <label class="fld">Inspected — Day<input id="c-insp_day" placeholder="e.g. 19"></label>
+        <label class="fld">Month<input id="c-insp_month" placeholder="e.g. June"></label>
+        <label class="fld">Year (20__)<input id="c-insp_year" placeholder="e.g. 26"></label>
+        <label class="fld" style="grid-column:1 / -1">Place (DA-NMIS Licensed CSW/MDC)<input id="c-insp_place" list="cl-place" placeholder="e.g. Navotas CSW"><datalist id="cl-place"></datalist></label>
+        <label class="fld">Received by (Buyer/End-User)<input id="c-received" placeholder="auto: encoder"></label>
+        <label class="fld">Issued by — Officer (optional)<input id="c-officer" list="cl-officer" placeholder="leave blank if pre-printed"><datalist id="cl-officer"></datalist></label>
+      </div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn" id="cmi-save" onclick="cSave()">💾 Save to Cloud</button>
+        <button class="btn alt" onclick="cPrintSaved()">🖨️ Print COMI</button>
+        <button class="btn ghost" onclick="cShow('align')">👁️ Preview / Align</button>
+        <button class="btn ghost" onclick="cNew()">🆕 Clear Form</button>
+      </div>
+      <p class="hint">Control No. is kept on record but not printed (it is pre-printed on the official COMI form).</p>
+    </div>
+  </div>
+
+  <div id="cmi-records" style="display:none">
+    <div class="panel">
+      <h2>Saved COMI (<span id="cmi-count">0</span>)</h2>
+      <div class="search-row">
+        <input id="cmi-search" placeholder="🔍 Search control no., importer, buyer, destination…" oninput="cRecPage=1;cRender()">
+        <span style="flex:1"></span>
+        <button class="btn ghost sm" onclick="cRefresh()">🔄 Refresh</button>
+        <button class="btn ghost sm" onclick="cExport()">⬇️ Backup (JSON)</button>
+      </div>
+      <div id="cmi-list"><div class="empty">Loading…</div></div>
+    </div>
+  </div>
+
+  <div id="cmi-align" style="display:none">
+    <div class="panel">
+      <h2>COMI Print Alignment &amp; Preview</h2>
+      <div class="note">Positions the typed data onto your pre-printed COMI form. Set by the administrator and used by everyone.</div>
+      <div id="cmi-align-note" class="note" style="display:none;background:#eff6ff;border-color:#bfdbfe;color:#1e40af">🔒 Alignment is set by your administrator. You can still use Test print.</div>
+      <div class="cal-layout">
+        <div class="cal-controls">
+          <div class="ctl"><label>Paper size</label>
+            <select id="cc-paper" onchange="cApplyCal()">
+              <option value="COMI">COMI form (167 × 216 mm)</option>
+              <option value="A4">A4 (210 × 297 mm)</option>
+              <option value="Letter">Letter (216 × 279 mm)</option>
+              <option value="Legal">Legal (216 × 356 mm)</option>
+              <option value="Folio">Folio / Long (216 × 330 mm)</option>
+            </select></div>
+          <div class="ctl"><label>Horizontal offset: <span class="range-val" id="cv-offx">0</span> mm</label><input type="range" id="cc-offx" min="-20" max="20" step="0.5" value="0" oninput="cApplyCal()"></div>
+          <div class="ctl"><label>Vertical offset: <span class="range-val" id="cv-offy">0</span> mm</label><input type="range" id="cc-offy" min="-20" max="20" step="0.5" value="0" oninput="cApplyCal()"></div>
+          <div class="ctl"><label>Text size: <span class="range-val" id="cv-font">10</span> pt</label><input type="range" id="cc-font" min="6" max="16" step="0.5" value="10" oninput="cApplyCal()"></div>
+          <div class="ctl"><label>Font style</label><select id="cc-fontfam" onchange="cApplyCal()"><option value="Mono">Monospace (Courier)</option><option value="Sans">Sans-serif (Arial)</option><option value="Serif">Serif (Times)</option></select></div>
+          <div class="ctl" id="cc-refimg"><label>Reference image (optional, on-screen only)</label><input type="file" accept="image/*" onchange="cLoadBg(event)"><button class="btn ghost sm" style="margin-top:6px" onclick="cClearBg()">Remove image</button></div>
+          <div class="ctl" id="cc-helpers"><label>Helpers</label><div class="seg" style="margin-top:8px"><button id="cc-edit-off" class="on" onclick="cToggleEdit(false)">Lock fields</button><button id="cc-edit-on" onclick="cToggleEdit(true)">Drag to adjust</button></div><p class="legend">Turn on “Drag to adjust” then drag any field on the preview to fine-tune. Saved automatically.</p></div>
+          <div class="ctl"><button class="btn alt sm" onclick="cPrint()">🖨️ Test print</button><button class="btn warn sm" id="cc-reset" onclick="cReset()">↺ Reset field map</button></div>
+        </div>
+        <div class="preview-stage"><div id="cmi-preview"></div><p class="legend" style="color:#e2e8f0">Preview shows current COMI data scaled to paper size. Background image is alignment-only and never prints.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="view-dash" style="display:none">
   <div class="panel">
     <h2>Activity Dashboard</h2>
@@ -359,7 +451,7 @@ let sb = null;
 try{ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }catch(e){ console.error(e); }
 
 /* ============ Paper & field map ============ */
-const PAPER = {A4:[210,297], Letter:[216,279], Legal:[216,356], Folio:[216,330]};
+const PAPER = {A4:[210,297], Letter:[216,279], Legal:[216,356], Folio:[216,330], COMI:[166.7,215.9]};
 const FONTS = {Mono:'"Courier New",monospace', Sans:'Arial,Helvetica,sans-serif', Serif:'"Times New Roman",Times,serif'};
 const DEFAULT_MAP = {
   nmis_no:{label:"NMIS No.",x:62.0,y:12.6,size:15,align:"left",bold:true},
@@ -382,16 +474,44 @@ const DEFAULT_MAP = {
 };
 const DEFAULT_TABLE = {colTypeL:11.0,colQtyL:26.5,colTypeR:54.0,colQtyR:70.0,startY:49.5,rowH:3.75,rowsPerCol:7,size:10.5};
 
+/* ====== COMI field map (positions in % of the pre-printed COMI form) ====== */
+const DEFAULT_CMAP = {
+  importer:{x:53.0,y:27.5,size:10,align:"left",fitR:86},
+  country_origin:{x:5.0,y:31.0,size:10,align:"left",fitR:27},
+  meat_desc:{x:28.0,y:39.2,size:9.5,align:"left",fitR:92},
+  evqmiic:{x:28.0,y:41.4,size:9.5,align:"left",fitR:92},
+  volume:{x:28.0,y:43.6,size:9.5,align:"left",fitR:92},
+  production_date:{x:28.0,y:45.7,size:9.5,align:"left",fitR:92},
+  expiry_date:{x:28.0,y:47.7,size:9.5,align:"left",fitR:92},
+  fme:{x:28.0,y:49.8,size:9.5,align:"left",fitR:92},
+  buyer:{x:28.0,y:54.2,size:9.5,align:"left",fitR:92},
+  place_dest:{x:28.0,y:56.3,size:9.5,align:"left",fitR:92},
+  withdrawal_date:{x:28.0,y:58.4,size:9.5,align:"left",fitR:92},
+  mtv:{x:28.0,y:60.5,size:9.5,align:"left",fitR:92},
+  insp_day:{x:40.0,y:63.6,size:9.5,align:"center"},
+  insp_month:{x:55.0,y:63.6,size:9.5,align:"center"},
+  insp_year:{x:79.0,y:63.6,size:9.5,align:"center"},
+  insp_place:{x:88.0,y:63.6,size:9,align:"center"},
+  received:{x:30.0,y:68.8,size:10,align:"center",bold:true},
+  officer:{x:82.0,y:68.8,size:10,align:"center",bold:true}
+};
+const CFIELDS=["control_no","importer","country_origin","meat_desc","evqmiic","volume","production_date","expiry_date","fme","buyer","place_dest","withdrawal_date","mtv","insp_day","insp_month","insp_year","insp_place","received","officer"];
+
 /* ============ State ============ */
 let MAP=loadJSON("nmis_fieldmap",null)||deepClone(DEFAULT_MAP);
 let TBL=loadJSON("nmis_table",null)||deepClone(DEFAULT_TABLE);
 let CAL=loadJSON("nmis_calibration",null)||{paper:"A4",offx:0,offy:0,font:11,fontFamily:"Mono"};
 let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
+/* COMI state */
+let CMAP=loadJSON("nmis_comi_fieldmap",null)||deepClone(DEFAULT_CMAP);
+let CCAL=loadJSON("nmis_comi_cal",null)||{paper:"COMI",offx:0,offy:0,font:10,fontFamily:"Mono"};
+let CBG=localStorage.getItem("nmis_comi_bg")||"";
+let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="entry";
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="41";
+const APP_VERSION="42";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -470,9 +590,11 @@ async function onSignedIn(session){
   if(!$("f-received").value)$("f-received").value=isGeneric()?"":encoderName();
   applyRole();
   await loadSettings();
+  await cLoadSettings();
   await loadEstablishments();
   await loadDestinations();
   await refreshRecords();
+  await cRefresh();
   logActivity("login","");
 }
 async function loadSettings(){
@@ -681,7 +803,7 @@ function exportData(){
 }
 
 /* ============ Tabs ============ */
-function showTab(t){["entry","records","calib","dash","users","help"].forEach(v=>{$("view-"+v).style.display=v===t?"block":"none";$("tab-"+v).classList.toggle("active",v===t)});if(t==="records")renderRecords();if(t==="calib")renderPreview();if(t==="users")loadUsers();if(t==="dash")loadDashboard()}
+function showTab(t){["entry","records","calib","comi","dash","users","help"].forEach(v=>{$("view-"+v).style.display=v===t?"block":"none";$("tab-"+v).classList.toggle("active",v===t)});if(t==="records")renderRecords();if(t==="calib")renderPreview();if(t==="users")loadUsers();if(t==="dash")loadDashboard();if(t==="comi")cShow(cSub)}
 function goPreview(){showTab("calib")}
 
 /* ============ Overlay build (shared) ============ */
@@ -775,12 +897,81 @@ function fitFields(container){
 function printCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}buildPrint(o);logActivity("print","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));window.print()}
 function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}if(!editingId){toast("⚠️ Save the transaction first, then print.");return}if(dirty){toast("⚠️ You have unsaved changes — save first, then print.");return}buildPrint(o);logActivity("print","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));window.print()}
 
+/* ================= COMI module ================= */
+function cShow(sub){cSub=sub;["entry","records","align"].forEach(function(s){var v=$("cmi-"+s);if(v)v.style.display=s===sub?"block":"none";var b=$("cmi-tab-"+s);if(b)b.classList.toggle("on",s===sub);});if(sub==="records")cRender();if(sub==="align"){cLoadCalUI();cApplyLock();cRenderPreview();}}
+function cGetForm(){var o={};CFIELDS.forEach(function(f){o[f]=($("c-"+f).value||"").trim();});return o;}
+function cSetForm(o){o=o||{};CFIELDS.forEach(function(f){$("c-"+f).value=o[f]||"";});}
+function cToRow(o){var r={};CFIELDS.forEach(function(f){r[f]=o[f]||null;});r.encoder_name=o.received||null;return r;}
+function cFromRow(r){var o={id:r.id,created_at:r.created_at,created_by:r.created_by||""};CFIELDS.forEach(function(f){o[f]=r[f]||"";});if(!o.received)o.received=r.encoder_name||"";return o;}
+async function cLoadSettings(){try{const {data}=await sb.from("nmis_settings").select("cal,fieldmap").eq("id","comi").maybeSingle();if(data){if(data.cal&&Object.keys(data.cal).length)CCAL=Object.assign({},CCAL,data.cal);if(data.fieldmap)CMAP=data.fieldmap;}}catch(e){}}
+let _cSetTimer=null;
+function cSaveSettings(){if(!isAdmin())return;clearTimeout(_cSetTimer);_cSetTimer=setTimeout(async()=>{try{const u=(await sb.auth.getUser()).data.user;const {error}=await sb.from("nmis_settings").upsert({id:"comi",cal:CCAL,fieldmap:CMAP,updated_at:new Date().toISOString(),updated_by:u?u.id:null});if(error)throw error;}catch(e){toast("⚠️ Couldn't save COMI alignment: "+(e.message||e));}},600);}
+async function cRefresh(silent){try{const {data,error}=await sb.from("nmis_comi").select("*").order("created_at",{ascending:false});if(error)throw error;CRECORDS=(data||[]).map(cFromRow);cBuildSuggest();cUpdateNavPos();if($("cmi-records")&&$("cmi-records").style.display!=="none")cRender();if(!silent&&$("cmi-records")&&$("cmi-records").style.display!=="none")toast("COMI records refreshed.");}catch(e){var l=$("cmi-list");if(l)l.innerHTML=`<div class="empty">⚠️ Could not load: ${esc(e.message||e)}</div>`;}}
+function cBuildSuggest(){var map={"cl-importer":"importer","cl-country":"country_origin","cl-meat":"meat_desc","cl-fme":"fme","cl-buyer":"buyer","cl-dest":"place_dest","cl-cmtv":"mtv","cl-place":"insp_place","cl-officer":"officer"};Object.keys(map).forEach(function(id){var dl=$(id);if(!dl)return;var f=map[id],seen={},opts=[];CRECORDS.forEach(function(r){var v=(r[f]||"").trim(),k=v.toLowerCase();if(v&&!seen[k]){seen[k]=1;opts.push(v);}});opts.sort(function(a,b){return a.localeCompare(b)});dl.innerHTML=opts.map(function(v){return '<option value="'+esc(v)+'"></option>'}).join("");});}
+async function cSave(){const o=cGetForm();if(!o.control_no){toast("⚠️ Control No. is required.");$("c-control_no").focus();return}
+  const key=o.control_no.trim().toLowerCase();const dup=CRECORDS.find(r=>r.id!==cEditingId&&(r.control_no||"").trim().toLowerCase()===key);
+  if(dup){toast("⚠️ Control No. "+o.control_no+" already exists. Use a different one or open the existing record.");$("c-control_no").focus();return}
+  const btn=$("cmi-save");btn.disabled=true;const old=btn.textContent;btn.innerHTML='<span class="spinner"></span> Saving…';
+  try{if(cEditingId){const {error}=await sb.from("nmis_comi").update(cToRow(o)).eq("id",cEditingId);if(error)throw error;toast("✅ COMI updated.");logActivity("update_certificate","COMI "+o.control_no);}
+    else{const {data,error}=await sb.from("nmis_comi").insert(cToRow(o)).select().single();if(error)throw error;cEditingId=data.id;$("cmi-editbanner").style.display="block";$("cmi-editid").textContent=o.control_no;toast("✅ COMI saved.");logActivity("create_certificate","COMI "+o.control_no);}
+    cDirty=false;await cRefresh(true);
+  }catch(e){toast("⚠️ Save failed: "+(e.message||e));}
+  btn.disabled=false;btn.textContent=old;}
+function cRender(){var cnt=$("cmi-count");if(cnt)cnt.textContent=CRECORDS.length;var q=($("cmi-search").value||"").toLowerCase().trim();
+  var list=CRECORDS.filter(r=>!q||[r.control_no,r.importer,r.buyer,r.place_dest,r.country_origin,r.meat_desc].join(" ").toLowerCase().includes(q));
+  if(!list.length){$("cmi-list").innerHTML=`<div class="empty">${CRECORDS.length?"No COMI match your search.":"No COMI yet. Fill the form and Save."}</div>`;return}
+  var totalPages=Math.max(1,Math.ceil(list.length/PAGE_SIZE));if(cRecPage>totalPages)cRecPage=totalPages;if(cRecPage<1)cRecPage=1;
+  var start=(cRecPage-1)*PAGE_SIZE,pageItems=list.slice(start,start+PAGE_SIZE);
+  var h=`<table class="rec-table"><thead><tr><th>Control No.</th><th>Importer</th><th>Buyer / End-User</th><th>Destination</th><th>Encoded by</th><th>Timestamp</th><th style="width:200px">Actions</th></tr></thead><tbody>`;
+  pageItems.forEach(r=>{h+=`<tr><td><b>${esc(r.control_no)}</b></td><td>${esc(r.importer)}</td><td>${esc(r.buyer)}</td><td>${esc(r.place_dest)}</td><td>${esc(r.encoder_name||r.received||"")}</td><td>${r.created_at?esc(fmtDateTime(r.created_at)):""}</td>
+    <td><div class="rec-actions"><button class="btn alt sm" onclick="cPrintRecord('${r.id}')">🖨️ Print</button>${(isAdmin()||r.created_by===USER_ID)?`<button class="btn ghost sm" onclick="cEdit('${r.id}')">✏️ Edit</button>`:""}<button class="btn ghost sm" onclick="cDuplicate('${r.id}')">📋 Duplicate</button>${isAdmin()?`<button class="btn warn sm" onclick="cDelete('${r.id}')">🗑️</button>`:""}</div></td></tr>`});
+  h+="</tbody></table>";
+  h+=`<div class="search-row" style="margin-top:10px;align-items:center"><button class="btn ghost sm" onclick="cGotoPage(${cRecPage-1})" ${cRecPage<=1?"disabled":""}>◀ Prev</button><span style="align-self:center;color:#475569">Page ${cRecPage} of ${totalPages} — ${list.length} record(s)</span><button class="btn ghost sm" onclick="cGotoPage(${cRecPage+1})" ${cRecPage>=totalPages?"disabled":""}>Next ▶</button></div>`;
+  $("cmi-list").innerHTML=h;}
+function cGotoPage(p){cRecPage=p;cRender();var l=$("cmi-list");if(l)l.scrollIntoView({behavior:"smooth",block:"start"});}
+function cEdit(id){var r=CRECORDS.find(x=>x.id===id);if(!r)return;cSetForm(r);cEditingId=id;cDirty=false;$("cmi-editbanner").style.display="block";$("cmi-editid").textContent=r.control_no;cUpdateNavPos();cShow("entry");window.scrollTo(0,0);}
+function cDuplicate(id){var r=CRECORDS.find(x=>x.id===id);if(!r)return;var c=Object.assign({},r);c.control_no="";cSetForm(c);cEditingId=null;cDirty=true;$("cmi-editbanner").style.display="none";if(isGeneric())$("c-received").value=r.received||r.encoder_name||"";cShow("entry");window.scrollTo(0,0);$("c-control_no").focus();toast("📋 Copied. Enter a new Control No., then Save.");}
+async function cDelete(id){var r=CRECORDS.find(x=>x.id===id);if(!r)return;if(!confirm("Delete COMI "+r.control_no+"? This cannot be undone."))return;try{const {error}=await sb.from("nmis_comi").delete().eq("id",id);if(error)throw error;logActivity("delete_certificate","COMI "+r.control_no);if(cEditingId===id)cNew();await cRefresh(true);cRender();toast("COMI deleted.");}catch(e){toast("⚠️ Delete failed: "+(e.message||e));}}
+function cNew(){cEditingId=null;$("cmi-editbanner").style.display="none";cSetForm({});$("c-received").value=isGeneric()?"":encoderName();cDirty=false;cUpdateNavPos();cShow("entry");toast("Cleared. Ready for a new COMI.");}
+function cUpdateNavPos(){var el=$("cmi-navpos");if(!el)return;if(cEditingId){var i=CRECORDS.findIndex(r=>r.id===cEditingId);el.textContent=i>=0?("Record "+(i+1)+" of "+CRECORDS.length):"";}else el.textContent=CRECORDS.length?("New — "+CRECORDS.length+" saved"):"";}
+function cNav(dir){if(!CRECORDS.length){toast("No saved COMI yet.");return;}if(cDirty&&!confirm("Discard unsaved changes and move to another record?"))return;var idx=cEditingId?CRECORDS.findIndex(r=>r.id===cEditingId):-1;var ni=idx<0?0:idx+dir;if(ni<0){toast("Already at the newest record.");return;}if(ni>=CRECORDS.length){toast("Already at the oldest record.");return;}cEdit(CRECORDS[ni].id);}
+function cExport(){var blob=new Blob([JSON.stringify({version:1,type:"COMI",exported:new Date().toISOString(),records:CRECORDS},null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nmis-comi-backup.json";a.click();}
+function cFieldNodes(data){var nodes=[];Object.keys(CMAP).forEach(function(k){var v=data[k];if(v==null||v==="")return;var m=CMAP[k],dm=DEFAULT_CMAP[k]||{};nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,fitR:(m.fitR!=null?m.fitR:dm.fitR),key:k,text:String(v)});});return nodes;}
+function cBuildPrint(data){const [pw,ph]=PAPER[CCAL.paper]||PAPER.COMI;const root=$("print-page");
+  root.style.setProperty("--pw",pw+"mm");root.style.setProperty("--ph",ph+"mm");document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
+  let html="";const ff=(FONTS[CCAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
+  cFieldNodes(data).forEach(n=>{const leftN=(n.x+pxToPct(CCAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CCAL.offy,ph))+"%";const fs=((n.size/10)*CCAL.font)+"pt";var cls=n.align==='center'?'center':'',fitAttr=n.fitR?` data-x="${leftN}" data-fitr="${n.fitR}"`:"";
+    html+=`<div class="ov-field ${cls}"${fitAttr} style="left:${left};top:${top};font-size:${fs};font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`});
+  root.innerHTML=html;const pr=$("print-root");pr.style.cssText="display:block;position:absolute;left:-10000px;top:0";root.style.width=pw+"mm";root.style.height=ph+"mm";root.style.overflow="hidden";fitFields(root);pr.style.cssText="";}
+function cPrint(){const o=cGetForm();if(!o.control_no){toast("⚠️ Enter at least the Control No. before printing.");return}cBuildPrint(o);logActivity("print","COMI "+o.control_no);window.print();}
+function cPrintSaved(){const o=cGetForm();if(!o.control_no){toast("⚠️ Enter at least the Control No. before printing.");return}if(!cEditingId){toast("⚠️ Save the COMI first, then print.");return}if(cDirty){toast("⚠️ You have unsaved changes — save first, then print.");return}cBuildPrint(o);logActivity("print","COMI "+o.control_no);window.print();}
+function cPrintRecord(id){var r=CRECORDS.find(x=>x.id===id);if(!r)return;cBuildPrint(r);logActivity("print","COMI "+r.control_no);window.print();}
+function cRenderPreview(){const data=cGetForm();const [pw,ph]=PAPER[CCAL.paper]||PAPER.COMI;const stage=$("cmi-preview");if(!stage)return;
+  const W=Math.min(680,(stage.parentElement.clientWidth-32));const scale=W/pw;stage.style.width=W+"px";stage.style.height=(ph*scale)+"px";
+  stage.style.backgroundImage=CBG?`url(${CBG})`:"none";stage.classList.toggle("editing",cEditMode);
+  let html="";const ff=(FONTS[CCAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
+  cFieldNodes(data).forEach(n=>{const leftN=(n.x+pxToPct(CCAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CCAL.offy,ph))+"%";const fs=((n.size/10)*CCAL.font)*scale*(25.4/72);var cls=n.align==='center'?'center':'',fitAttr=(n.fitR&&!cEditMode)?` data-x="${leftN}" data-fitr="${n.fitR}"`:"";
+    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;});
+  stage.innerHTML=html;fitFields(stage);if(cEditMode)cAttachDrag(pw,ph);}
+function cAttachDrag(pw,ph){const stage=$("cmi-preview");stage.querySelectorAll(".ov-field").forEach(el=>{el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;const rect=stage.getBoundingClientRect();
+  function move(ev){let x=((ev.clientX-rect.left)/rect.width)*100,y=((ev.clientY-rect.top)/rect.height)*100;x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));CMAP[key].x=+(x-pxToPct(CCAL.offx,pw)).toFixed(2);CMAP[key].y=+(y-pxToPct(CCAL.offy,ph)).toFixed(2);cRenderPreview();}
+  function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_comi_fieldmap",CMAP);cSaveSettings();toast("Position saved.");}
+  document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);};});}
+function cApplyCal(){CCAL.paper=$("cc-paper").value;CCAL.fontFamily=$("cc-fontfam").value;CCAL.offx=parseFloat($("cc-offx").value);CCAL.offy=parseFloat($("cc-offy").value);CCAL.font=parseFloat($("cc-font").value);$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;saveJSON("nmis_comi_cal",CCAL);cSaveSettings();cRenderPreview();}
+function cToggleEdit(on){cEditMode=on;$("cc-edit-on").classList.toggle("on",on);$("cc-edit-off").classList.toggle("on",!on);cRenderPreview();}
+function cLoadBg(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{CBG=rd.result;try{localStorage.setItem("nmis_comi_bg",CBG)}catch(e){toast("Image too large to save; shown this session only.")}cRenderPreview()};rd.readAsDataURL(f);}
+function cClearBg(){CBG="";localStorage.removeItem("nmis_comi_bg");cRenderPreview();}
+function cReset(){if(!confirm("Reset COMI field positions to defaults?"))return;CMAP=deepClone(DEFAULT_CMAP);saveJSON("nmis_comi_fieldmap",CMAP);cSaveSettings();cRenderPreview();toast("COMI field map reset.");}
+function cLoadCalUI(){$("cc-paper").value=CCAL.paper;$("cc-offx").value=CCAL.offx;$("cc-offy").value=CCAL.offy;$("cc-font").value=CCAL.font;$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;if($("cc-fontfam"))$("cc-fontfam").value=CCAL.fontFamily||"Mono";}
+function cApplyLock(){var ro=!isAdmin();["cc-paper","cc-offx","cc-offy","cc-font","cc-fontfam"].forEach(id=>{var el=$(id);if(el)el.disabled=ro;});["cc-refimg","cc-helpers","cc-reset"].forEach(id=>{var el=$(id);if(el)el.style.display=ro?"none":"";});var n=$("cmi-align-note");if(n)n.style.display=ro?"block":"none";if(ro)cEditMode=false;}
+
 /* ============ Init ============ */
 (async function init(){
   const [pw,ph]=PAPER[CAL.paper];
   document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
   setMeat(null);$("f-date").value=new Date().toISOString().slice(0,10);loadCalUI();
   var ve=$("view-entry");if(ve)ve.addEventListener("input",function(){dirty=true});
+  var ce=$("cmi-entry");if(ce)ce.addEventListener("input",function(){cDirty=true});
   restoreAutoRefresh();
   checkVersion();setInterval(checkVersion,120000);
   document.addEventListener("visibilitychange",function(){if(!document.hidden)checkVersion()});
