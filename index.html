@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:50-->
+<!--APPVER:51-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -534,7 +534,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="50";
+const APP_VERSION="51";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -922,7 +922,7 @@ function printCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter
 function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}if(!editingId){toast("⚠️ Save the transaction first, then print.");return}if(dirty){toast("⚠️ You have unsaved changes — save first, then print.");return}buildPrint(o);logActivity("print","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));window.print()}
 
 /* ================= COMI module ================= */
-function cShow(sub){cSub=sub;["entry","records","align"].forEach(function(s){var v=$("cmi-"+s);if(v)v.style.display=s===sub?"block":"none";var b=$("cmi-tab-"+s);if(b)b.classList.toggle("on",s===sub);});if(sub==="records")cRender();if(sub==="align"){cLoadCalUI();cApplyLock();cRenderPreview();}}
+function cShow(sub){cSub=sub;["entry","records","align"].forEach(function(s){var v=$("cmi-"+s);if(v)v.style.display=s===sub?"block":"none";var b=$("cmi-tab-"+s);if(b)b.classList.toggle("on",s===sub);});if(sub==="entry"&&!cEditingId&&$("c-received")&&!$("c-received").value&&!isGeneric())$("c-received").value=encoderName();if(sub==="records")cRender();if(sub==="align"){cLoadCalUI();cApplyLock();cRenderPreview();}}
 var CPATTR=["hdr","desc","evq","vol","prod","exp","fme"];
 function cGetForm(){var o={};CFIELDS.forEach(function(f){o[f]=($("c-"+f).value||"").trim();});
   o.products=[0,1,2].map(function(i){var p={};CPATTR.forEach(function(a){var el=$("c-p"+i+"-"+a);p[a]=el?(el.value||"").trim():"";});return p;});return o;}
