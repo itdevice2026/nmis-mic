@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:46-->
+<!--APPVER:47-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -304,14 +304,23 @@
       <div class="grid g2">
         <label class="fld">Control No. <span class="req">*</span><input id="c-control_no" placeholder="pre-printed no. (kept, not printed)"></label>
         <label class="fld">Importer (DA-NMIS Licensed)<input id="c-importer" list="cl-importer" placeholder="Name of importer"><datalist id="cl-importer"></datalist></label>
-        <label class="fld">Country of Origin<input id="c-country_origin" list="cl-country" placeholder="e.g. Brazil"><datalist id="cl-country"></datalist></label>
-        <label class="fld" style="grid-column:1 / -1">Meat Description<input id="c-meat_desc" list="cl-meat" placeholder="e.g. Frozen Pork Cuts"><datalist id="cl-meat"></datalist></label>
-        <label class="fld">eVQMIIC No.<input id="c-evqmiic"></label>
-        <label class="fld">Volume (kg)<input id="c-volume"></label>
-        <label class="fld">Production Date<input id="c-production_date" placeholder="e.g. Jun 1, 2026"></label>
-        <label class="fld">Expiry / Best Before Date<input id="c-expiry_date" placeholder="e.g. Jun 1, 2027"></label>
-        <label class="fld" style="grid-column:1 / -1">FME Name and No.<input id="c-fme" list="cl-fme" placeholder="Foreign Meat Establishment name & no."><datalist id="cl-fme"></datalist></label>
+        <label class="fld" style="grid-column:1 / -1">Country of Origin<input id="c-country_origin" list="cl-country" placeholder="one per column, e.g. US/Brazil/Brazil"><datalist id="cl-country"></datalist></label>
       </div>
+      <h2 style="margin-top:16px">Product Details (up to 3 meat-type columns)</h2>
+      <table class="meat-table" id="cmi-prod-tbl">
+        <thead><tr><th style="width:22%"></th><th>Column 1</th><th>Column 2</th><th>Column 3</th></tr></thead>
+        <tbody>
+          <tr><td><b>Type header</b></td><td><input id="c-p0-hdr" list="cl-hdr" placeholder="e.g. BEEF"></td><td><input id="c-p1-hdr" list="cl-hdr" placeholder="e.g. PORK"></td><td><input id="c-p2-hdr" list="cl-hdr" placeholder="e.g. CHICKEN"></td></tr>
+          <tr><td>Meat Description</td><td><input id="c-p0-desc" list="cl-meat"></td><td><input id="c-p1-desc" list="cl-meat"></td><td><input id="c-p2-desc" list="cl-meat"></td></tr>
+          <tr><td>eVQMILC No.</td><td><input id="c-p0-evq"></td><td><input id="c-p1-evq"></td><td><input id="c-p2-evq"></td></tr>
+          <tr><td>Volume (kg)</td><td><input id="c-p0-vol"></td><td><input id="c-p1-vol"></td><td><input id="c-p2-vol"></td></tr>
+          <tr><td>Production Date</td><td><input id="c-p0-prod" placeholder="e.g. 3-2026"></td><td><input id="c-p1-prod"></td><td><input id="c-p2-prod"></td></tr>
+          <tr><td>Expiry / Best Before</td><td><input id="c-p0-exp" placeholder="e.g. 3-2028"></td><td><input id="c-p1-exp"></td><td><input id="c-p2-exp"></td></tr>
+          <tr><td>FME Name &amp; No.</td><td><input id="c-p0-fme" list="cl-fme"></td><td><input id="c-p1-fme" list="cl-fme"></td><td><input id="c-p2-fme" list="cl-fme"></td></tr>
+        </tbody>
+      </table>
+      <datalist id="cl-hdr"></datalist><datalist id="cl-meat"></datalist><datalist id="cl-fme"></datalist>
+      <p class="hint">Fill one column per meat type. Leave unused columns blank. Headers (BEEF/PORK/CHICKEN) print above each column.</p>
       <h2 style="margin-top:16px">Withdrawal Details</h2>
       <div class="grid g2">
         <label class="fld">Buyer / End-User<input id="c-buyer" list="cl-buyer" placeholder="Type or pick"><datalist id="cl-buyer"></datalist></label>
@@ -494,12 +503,6 @@ const DEFAULT_TABLE = {colTypeL:11.0,colQtyL:26.5,colTypeR:54.0,colQtyR:70.0,sta
 const DEFAULT_CMAP = {
   importer:{x:53.0,y:27.5,size:10,align:"left",fitR:86},
   country_origin:{x:5.0,y:31.0,size:10,align:"left",fitR:27},
-  meat_desc:{x:28.0,y:39.2,size:9.5,align:"left",fitR:92},
-  evqmiic:{x:28.0,y:41.4,size:9.5,align:"left",fitR:92},
-  volume:{x:28.0,y:43.6,size:9.5,align:"left",fitR:92},
-  production_date:{x:28.0,y:45.7,size:9.5,align:"left",fitR:92},
-  expiry_date:{x:28.0,y:47.7,size:9.5,align:"left",fitR:92},
-  fme:{x:28.0,y:49.8,size:9.5,align:"left",fitR:92},
   buyer:{x:28.0,y:54.2,size:9.5,align:"left",fitR:92},
   place_dest:{x:28.0,y:56.3,size:9.5,align:"left",fitR:92},
   withdrawal_date:{x:28.0,y:58.4,size:9.5,align:"left",fitR:92},
@@ -511,7 +514,10 @@ const DEFAULT_CMAP = {
   received:{x:30.0,y:68.8,size:10,align:"center",bold:true},
   officer:{x:82.0,y:68.8,size:10,align:"center",bold:true}
 };
-const CFIELDS=["control_no","importer","country_origin","meat_desc","evqmiic","volume","production_date","expiry_date","fme","buyer","place_dest","withdrawal_date","mtv","insp_day","insp_month","insp_year","insp_place","received","officer"];
+/* COMI product table: 3 columns (meat types), rows = header + 6 attributes */
+const DEFAULT_CTBL = {colX:[28.0,50.0,72.0], rowY:{hdr:36.5,desc:39.2,evq:41.4,vol:43.6,prod:45.7,exp:47.7,fme:49.8}, size:9.5};
+const CPROW=[["hdr","Type header"],["desc","Meat Description"],["evq","eVQMILC No."],["vol","Volume (kg)"],["prod","Production Date"],["exp","Expiry/Best Before"],["fme","FME Name and No."]];
+const CFIELDS=["control_no","importer","country_origin","buyer","place_dest","withdrawal_date","mtv","insp_day","insp_month","insp_year","insp_place","received","officer"];
 
 /* ============ State ============ */
 let MAP=loadJSON("nmis_fieldmap",null)||deepClone(DEFAULT_MAP);
@@ -521,13 +527,14 @@ let BG=localStorage.getItem("nmis_bg")||"";
 let RECORDS=[];
 /* COMI state */
 let CMAP=loadJSON("nmis_comi_fieldmap",null)||deepClone(DEFAULT_CMAP);
+let CTBL=loadJSON("nmis_comi_tbl",null)||deepClone(DEFAULT_CTBL);
 let CCAL=loadJSON("nmis_comi_cal",null)||{paper:"COMI",offx:0,offy:0,font:10,fontFamily:"Mono"};
 let CBG=localStorage.getItem("nmis_comi_bg")||"";
 let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="entry";
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="46";
+const APP_VERSION="47";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -915,15 +922,22 @@ function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ 
 
 /* ================= COMI module ================= */
 function cShow(sub){cSub=sub;["entry","records","align"].forEach(function(s){var v=$("cmi-"+s);if(v)v.style.display=s===sub?"block":"none";var b=$("cmi-tab-"+s);if(b)b.classList.toggle("on",s===sub);});if(sub==="records")cRender();if(sub==="align"){cLoadCalUI();cApplyLock();cRenderPreview();}}
-function cGetForm(){var o={};CFIELDS.forEach(function(f){o[f]=($("c-"+f).value||"").trim();});return o;}
-function cSetForm(o){o=o||{};CFIELDS.forEach(function(f){$("c-"+f).value=o[f]||"";});}
-function cToRow(o){var r={};CFIELDS.forEach(function(f){r[f]=o[f]||null;});r.encoder_name=o.received||null;return r;}
-function cFromRow(r){var o={id:r.id,created_at:r.created_at,created_by:r.created_by||""};CFIELDS.forEach(function(f){o[f]=r[f]||"";});if(!o.received)o.received=r.encoder_name||"";return o;}
-async function cLoadSettings(){try{const {data}=await sb.from("nmis_settings").select("cal,fieldmap").eq("id","comi").maybeSingle();if(data){if(data.cal&&Object.keys(data.cal).length)CCAL=Object.assign({},CCAL,data.cal);if(data.fieldmap)CMAP=data.fieldmap;}}catch(e){}}
+var CPATTR=["hdr","desc","evq","vol","prod","exp","fme"];
+function cGetForm(){var o={};CFIELDS.forEach(function(f){o[f]=($("c-"+f).value||"").trim();});
+  o.products=[0,1,2].map(function(i){var p={};CPATTR.forEach(function(a){var el=$("c-p"+i+"-"+a);p[a]=el?(el.value||"").trim():"";});return p;});return o;}
+function cSetForm(o){o=o||{};CFIELDS.forEach(function(f){$("c-"+f).value=o[f]||"";});var prods=o.products||[];
+  [0,1,2].forEach(function(i){var p=prods[i]||{};CPATTR.forEach(function(a){var el=$("c-p"+i+"-"+a);if(el)el.value=p[a]||"";});});}
+function cToRow(o){var r={};CFIELDS.forEach(function(f){r[f]=o[f]||null;});r.products=(o.products||[]).filter(function(p){return CPATTR.some(function(a){return p[a];});});r.encoder_name=o.received||null;return r;}
+function cFromRow(r){var o={id:r.id,created_at:r.created_at,created_by:r.created_by||""};CFIELDS.forEach(function(f){o[f]=r[f]||"";});if(!o.received)o.received=r.encoder_name||"";
+  if(Array.isArray(r.products)&&r.products.length)o.products=r.products;
+  else if(r.meat_desc||r.evqmiic||r.volume)o.products=[{hdr:"",desc:r.meat_desc||"",evq:r.evqmiic||"",vol:r.volume||"",prod:r.production_date||"",exp:r.expiry_date||"",fme:r.fme||""}];
+  else o.products=[];return o;}
+async function cLoadSettings(){try{const {data}=await sb.from("nmis_settings").select("cal,fieldmap,tbl").eq("id","comi").maybeSingle();if(data){if(data.cal&&Object.keys(data.cal).length)CCAL=Object.assign({},CCAL,data.cal);if(data.fieldmap)CMAP=data.fieldmap;if(data.tbl)CTBL=data.tbl;}}catch(e){}}
 let _cSetTimer=null;
-function cSaveSettings(){if(!isAdmin())return;clearTimeout(_cSetTimer);_cSetTimer=setTimeout(async()=>{try{const u=(await sb.auth.getUser()).data.user;const {error}=await sb.from("nmis_settings").upsert({id:"comi",cal:CCAL,fieldmap:CMAP,updated_at:new Date().toISOString(),updated_by:u?u.id:null});if(error)throw error;}catch(e){toast("⚠️ Couldn't save COMI alignment: "+(e.message||e));}},600);}
+function cSaveSettings(){if(!isAdmin())return;clearTimeout(_cSetTimer);_cSetTimer=setTimeout(async()=>{try{const u=(await sb.auth.getUser()).data.user;const {error}=await sb.from("nmis_settings").upsert({id:"comi",cal:CCAL,fieldmap:CMAP,tbl:CTBL,updated_at:new Date().toISOString(),updated_by:u?u.id:null});if(error)throw error;}catch(e){toast("⚠️ Couldn't save COMI alignment: "+(e.message||e));}},600);}
 async function cRefresh(silent){try{const {data,error}=await sb.from("nmis_comi").select("*").order("created_at",{ascending:false});if(error)throw error;CRECORDS=(data||[]).map(cFromRow);cBuildSuggest();cUpdateNavPos();if($("cmi-records")&&$("cmi-records").style.display!=="none")cRender();if(!silent&&$("cmi-records")&&$("cmi-records").style.display!=="none")toast("COMI records refreshed.");}catch(e){var l=$("cmi-list");if(l)l.innerHTML=`<div class="empty">⚠️ Could not load: ${esc(e.message||e)}</div>`;}}
-function cBuildSuggest(){var map={"cl-importer":"importer","cl-country":"country_origin","cl-meat":"meat_desc","cl-fme":"fme","cl-buyer":"buyer","cl-dest":"place_dest","cl-cmtv":"mtv","cl-place":"insp_place","cl-officer":"officer"};Object.keys(map).forEach(function(id){var dl=$(id);if(!dl)return;var f=map[id],seen={},opts=[];CRECORDS.forEach(function(r){var v=(r[f]||"").trim(),k=v.toLowerCase();if(v&&!seen[k]){seen[k]=1;opts.push(v);}});opts.sort(function(a,b){return a.localeCompare(b)});dl.innerHTML=opts.map(function(v){return '<option value="'+esc(v)+'"></option>'}).join("");});}
+function cBuildSuggest(){var map={"cl-importer":"importer","cl-country":"country_origin","cl-buyer":"buyer","cl-dest":"place_dest","cl-cmtv":"mtv","cl-place":"insp_place","cl-officer":"officer"};Object.keys(map).forEach(function(id){var dl=$(id);if(!dl)return;var f=map[id],seen={},opts=[];CRECORDS.forEach(function(r){var v=(r[f]||"").trim(),k=v.toLowerCase();if(v&&!seen[k]){seen[k]=1;opts.push(v);}});opts.sort(function(a,b){return a.localeCompare(b)});dl.innerHTML=opts.map(function(v){return '<option value="'+esc(v)+'"></option>'}).join("");});
+  var pm={"cl-hdr":"hdr","cl-meat":"desc","cl-fme":"fme"};Object.keys(pm).forEach(function(id){var dl=$(id);if(!dl)return;var a=pm[id],seen={},opts=[];CRECORDS.forEach(function(r){(r.products||[]).forEach(function(p){var v=((p&&p[a])||"").trim(),k=v.toLowerCase();if(v&&!seen[k]){seen[k]=1;opts.push(v);}});});opts.sort(function(x,y){return x.localeCompare(y)});dl.innerHTML=opts.map(function(v){return '<option value="'+esc(v)+'"></option>'}).join("");});}
 async function cSave(){const o=cGetForm();if(!o.control_no){toast("⚠️ Control No. is required.");$("c-control_no").focus();return}
   const key=o.control_no.trim().toLowerCase();const dup=CRECORDS.find(r=>r.id!==cEditingId&&(r.control_no||"").trim().toLowerCase()===key);
   if(dup){toast("⚠️ Control No. "+o.control_no+" already exists. Use a different one or open the existing record.");$("c-control_no").focus();return}
@@ -952,7 +966,10 @@ function cNew(){cEditingId=null;$("cmi-editbanner").style.display="none";cSetFor
 function cUpdateNavPos(){var el=$("cmi-navpos");if(!el)return;if(cEditingId){var i=CRECORDS.findIndex(r=>r.id===cEditingId);el.textContent=i>=0?("Record "+(i+1)+" of "+CRECORDS.length):"";}else el.textContent=CRECORDS.length?("New — "+CRECORDS.length+" saved"):"";}
 function cNav(dir){if(!CRECORDS.length){toast("No saved COMI yet.");return;}if(cDirty&&!confirm("Discard unsaved changes and move to another record?"))return;var idx=cEditingId?CRECORDS.findIndex(r=>r.id===cEditingId):-1;var ni=idx<0?0:idx+dir;if(ni<0){toast("Already at the newest record.");return;}if(ni>=CRECORDS.length){toast("Already at the oldest record.");return;}cEdit(CRECORDS[ni].id);}
 function cExport(){var blob=new Blob([JSON.stringify({version:1,type:"COMI",exported:new Date().toISOString(),records:CRECORDS},null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nmis-comi-backup.json";a.click();}
-function cFieldNodes(data){var nodes=[];Object.keys(CMAP).forEach(function(k){var v=data[k];if(v==null||v==="")return;var m=CMAP[k],dm=DEFAULT_CMAP[k]||{};nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,fitR:(m.fitR!=null?m.fitR:dm.fitR),key:k,text:String(v)});});return nodes;}
+function cFieldNodes(data){var nodes=[];Object.keys(CMAP).forEach(function(k){var v=data[k];if(v==null||v==="")return;var m=CMAP[k],dm=DEFAULT_CMAP[k]||{};nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,fitR:(m.fitR!=null?m.fitR:dm.fitR),key:k,text:String(v)});});
+  (data.products||[]).forEach(function(p,ci){if(ci>2||!p)return;var x=CTBL.colX[ci];var maxR=(ci<2?CTBL.colX[ci+1]-1:92);
+    CPATTR.forEach(function(a){var val=p[a];if(val==null||val==="")return;nodes.push({x:x,y:CTBL.rowY[a],size:CTBL.size,align:"left",bold:a==="hdr",fitR:maxR,key:"prod",col:ci,prow:a,text:String(val)});});});
+  return nodes;}
 function cBuildPrint(data){const [pw,ph]=PAPER[CCAL.paper]||PAPER.COMI;const root=$("print-page");
   root.style.setProperty("--pw",pw+"mm");root.style.setProperty("--ph",ph+"mm");document.documentElement.style.setProperty("--pw",pw+"mm");document.documentElement.style.setProperty("--ph",ph+"mm");
   let html="";const ff=(FONTS[CCAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
@@ -967,17 +984,18 @@ function cRenderPreview(){const data=cGetForm();const [pw,ph]=PAPER[CCAL.paper]|
   stage.style.backgroundImage=CBG?`url(${CBG})`:"none";stage.classList.toggle("editing",cEditMode);
   let html="";const ff=(FONTS[CCAL.fontFamily]||FONTS.Mono).replace(/"/g,"'");
   cFieldNodes(data).forEach(n=>{const leftN=(n.x+pxToPct(CCAL.offx,pw)),left=leftN+"%",top=(n.y+pxToPct(CCAL.offy,ph))+"%";const fs=((n.size/10)*CCAL.font)*scale*(25.4/72);var cls=n.align==='center'?'center':'',fitAttr=(n.fitR&&!cEditMode)?` data-x="${leftN}" data-fitr="${n.fitR}"`:"";
-    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;});
+    html+=`<div class="ov-field ${cls}"${fitAttr} data-key="${n.key}" data-col="${n.col==null?'':n.col}" data-prow="${n.prow||''}" style="left:${left};top:${top};font-size:${fs}px;font-family:${ff};${n.bold?'font-weight:700':''}">${esc(n.text)}</div>`;});
   stage.innerHTML=html;fitFields(stage);if(cEditMode)cAttachDrag(pw,ph);}
-function cAttachDrag(pw,ph){const stage=$("cmi-preview");stage.querySelectorAll(".ov-field").forEach(el=>{el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;const rect=stage.getBoundingClientRect();
-  function move(ev){let x=((ev.clientX-rect.left)/rect.width)*100,y=((ev.clientY-rect.top)/rect.height)*100;x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));CMAP[key].x=+(x-pxToPct(CCAL.offx,pw)).toFixed(2);CMAP[key].y=+(y-pxToPct(CCAL.offy,ph)).toFixed(2);cRenderPreview();}
-  function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_comi_fieldmap",CMAP);cSaveSettings();toast("Position saved.");}
+function cAttachDrag(pw,ph){const stage=$("cmi-preview");stage.querySelectorAll(".ov-field").forEach(el=>{el.onmousedown=e=>{e.preventDefault();const key=el.dataset.key;const col=el.dataset.col,prow=el.dataset.prow;const rect=stage.getBoundingClientRect();
+  function move(ev){let x=((ev.clientX-rect.left)/rect.width)*100,y=((ev.clientY-rect.top)/rect.height)*100;x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));var ax=+(x-pxToPct(CCAL.offx,pw)).toFixed(2),ay=+(y-pxToPct(CCAL.offy,ph)).toFixed(2);
+    if(key==="prod"){CTBL.colX[+col]=ax;CTBL.rowY[prow]=ay;}else{CMAP[key].x=ax;CMAP[key].y=ay;}cRenderPreview();}
+  function up(){document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);saveJSON("nmis_comi_fieldmap",CMAP);saveJSON("nmis_comi_tbl",CTBL);cSaveSettings();toast("Position saved.");}
   document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);};});}
 function cApplyCal(){CCAL.paper=$("cc-paper").value;CCAL.fontFamily=$("cc-fontfam").value;CCAL.offx=parseFloat($("cc-offx").value);CCAL.offy=parseFloat($("cc-offy").value);CCAL.font=parseFloat($("cc-font").value);$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;saveJSON("nmis_comi_cal",CCAL);cSaveSettings();cRenderPreview();}
 function cToggleEdit(on){cEditMode=on;$("cc-edit-on").classList.toggle("on",on);$("cc-edit-off").classList.toggle("on",!on);cRenderPreview();}
 function cLoadBg(ev){const f=ev.target.files[0];if(!f)return;fileToBg(f,function(url){CBG=url;try{localStorage.setItem("nmis_comi_bg",CBG)}catch(e){toast("Image too large to save; shown this session only.")}cRenderPreview()});}
 function cClearBg(){CBG="";localStorage.removeItem("nmis_comi_bg");cRenderPreview();}
-function cReset(){if(!confirm("Reset COMI field positions to defaults?"))return;CMAP=deepClone(DEFAULT_CMAP);saveJSON("nmis_comi_fieldmap",CMAP);cSaveSettings();cRenderPreview();toast("COMI field map reset.");}
+function cReset(){if(!confirm("Reset COMI field positions to defaults?"))return;CMAP=deepClone(DEFAULT_CMAP);CTBL=deepClone(DEFAULT_CTBL);saveJSON("nmis_comi_fieldmap",CMAP);saveJSON("nmis_comi_tbl",CTBL);cSaveSettings();cRenderPreview();toast("COMI field map reset.");}
 function cLoadCalUI(){$("cc-paper").value=CCAL.paper;$("cc-offx").value=CCAL.offx;$("cc-offy").value=CCAL.offy;$("cc-font").value=CCAL.font;$("cv-offx").textContent=CCAL.offx;$("cv-offy").textContent=CCAL.offy;$("cv-font").textContent=CCAL.font;if($("cc-fontfam"))$("cc-fontfam").value=CCAL.fontFamily||"Mono";}
 function cApplyLock(){var ro=!isAdmin();["cc-paper","cc-offx","cc-offy","cc-font","cc-fontfam"].forEach(id=>{var el=$(id);if(el)el.disabled=ro;});["cc-refimg","cc-helpers","cc-reset"].forEach(id=>{var el=$(id);if(el)el.style.display=ro?"none":"";});var n=$("cmi-align-note");if(n)n.style.display=ro?"block":"none";if(ro)cEditMode=false;}
 
