@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:53-->
+<!--APPVER:54-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -153,7 +153,7 @@
   <button id="tab-entry" class="active" onclick="showTab('entry')">📝 New / Edit Certificate</button>
   <button id="tab-records" onclick="showTab('records')">🗂️ Records</button>
   <button id="tab-calib" onclick="showTab('calib')">🎯 Print Alignment</button>
-  <button id="tab-comi" onclick="showTab('comi')">📄 COMI</button>
+  <button id="tab-comi" onclick="openComi()">📄 COMI ↗</button>
   <button id="tab-dash" onclick="showTab('dash')" style="display:none">📊 Dashboard</button>
   <button id="tab-users" onclick="showTab('users')" style="display:none">👥 Users &amp; Roles</button>
   <button id="tab-help" onclick="showTab('help')">❓ Help</button>
@@ -295,6 +295,7 @@
 </section>
 
 <section id="view-comi" style="display:none">
+  <div id="comi-back" style="display:none;margin-bottom:12px"><a href="#" onclick="goCertHome();return false" style="color:#15803d;font-weight:600;text-decoration:none">← Back to NMISCert (Meat Inspection Certificate)</a></div>
   <div class="seg" style="margin-bottom:14px">
     <button id="cmi-tab-entry" class="on" onclick="cShow('entry')">📝 Entry</button>
     <button id="cmi-tab-records" onclick="cShow('records')">🗂️ COMI Records</button>
@@ -540,7 +541,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="53";
+const APP_VERSION="54";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -625,6 +626,7 @@ async function onSignedIn(session){
   await loadDestinations();
   await refreshRecords();
   await cRefresh();
+  if(isComiStandalone())applyComiStandalone();
   logActivity("login","");
 }
 async function loadSettings(){
@@ -928,6 +930,10 @@ function printCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter
 function printSavedCertificate(){const o=getForm();if(!o.nmis_no){toast("⚠️ Enter at least the NMIS No. before printing.");return}if(!editingId){toast("⚠️ Save the transaction first, then print.");return}if(dirty){toast("⚠️ You have unsaved changes — save first, then print.");return}buildPrint(o);logActivity("print","NMIS "+o.nmis_no+(o.nmis_suffix?("-"+o.nmis_suffix):""));window.print()}
 
 /* ================= COMI module ================= */
+function openComi(){window.open(location.pathname+"?view=comi","NMIS_COMI");}
+function goCertHome(){location.href=location.origin+location.pathname;}
+function isComiStandalone(){try{return new URLSearchParams(location.search).get("view")==="comi";}catch(e){return false;}}
+function applyComiStandalone(){var t=document.querySelector(".tabs");if(t)t.style.display="none";["entry","records","calib","dash","users","help"].forEach(function(v){var el=$("view-"+v);if(el)el.style.display="none";});var c=$("view-comi");if(c)c.style.display="block";var bk=$("comi-back");if(bk)bk.style.display="block";document.title="NMIS COMI — Imported Meat";cShow(cSub);}
 function cShow(sub){cSub=sub;["entry","records","align"].forEach(function(s){var v=$("cmi-"+s);if(v)v.style.display=s===sub?"block":"none";var b=$("cmi-tab-"+s);if(b)b.classList.toggle("on",s===sub);});if(sub==="entry"&&!cEditingId&&$("c-received")&&!$("c-received").value&&!isGeneric())$("c-received").value=encoderName();if(sub==="records")cRender();if(sub==="align"){cLoadCalUI();cApplyLock();cRenderPreview();}}
 var CPATTR=["hdr","desc","evq","vol","prod","exp","fme"];
 function cGetForm(){var o={};CFIELDS.forEach(function(f){o[f]=($("c-"+f).value||"").trim();});
