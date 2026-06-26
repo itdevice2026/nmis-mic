@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--APPVER:55-->
+<!--APPVER:56-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -541,7 +541,7 @@ let CRECORDS=[],cEditingId=null,cDirty=false,cEditMode=false,cRecPage=1,cSub="en
 let editingId=null, gridOn=false, editMode=false, authMode="signin", ROLE="encoder", USER_EMAIL="", USER_NAME="", USER_ID="";
 let dirty=false;
 let recPage=1;const PAGE_SIZE=10;
-const APP_VERSION="55";
+const APP_VERSION="56";
 async function checkVersion(){
   try{
     const t=await fetch(location.pathname+"?cb="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -983,7 +983,7 @@ function cExport(){var blob=new Blob([JSON.stringify({version:1,type:"COMI",expo
 function cFieldNodes(data){var nodes=[];Object.keys(CMAP).forEach(function(k){var v=data[k];if(v==null||v==="")return;var m=CMAP[k],dm=DEFAULT_CMAP[k]||{};nodes.push({x:m.x,y:m.y,size:m.size,align:m.align,bold:m.bold,fitR:(m.fitR!=null?m.fitR:dm.fitR),key:k,text:String(v)});});
   var gaps=[];for(var gi=0;gi<2;gi++){if(CTBL.colX[gi+1]!=null&&CTBL.colX[gi]!=null)gaps.push(CTBL.colX[gi+1]-CTBL.colX[gi]);}
   var colw=(gaps.length?Math.min.apply(null,gaps):22)-1;
-  (data.products||[]).forEach(function(p,ci){if(ci>2||!p)return;var x=CTBL.colX[ci];var maxR=Math.min(98,x+colw);
+  (data.products||[]).forEach(function(p,ci){if(ci>2||!p)return;var x=CTBL.colX[ci];var maxR=Math.min(99.5,x+colw);
     CPATTR.forEach(function(a){var val=p[a];if(val==null||val==="")return;nodes.push({x:x,y:CTBL.rowY[a],size:CTBL.size,align:"left",bold:a==="hdr",fitR:maxR,key:"prod",col:ci,prow:a,text:String(val)});});});
   return nodes;}
 function cBuildPrint(data){const [pw,ph]=PAPER[CCAL.paper]||PAPER.COMI;const root=$("print-page");
